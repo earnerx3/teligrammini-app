@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Telegram Rewards App</title>
+    <title>Airdrop Zone</title>
     <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Tailwind CSS -->
@@ -21,6 +21,9 @@
             --text-primary: #FFFFFF;
             --text-secondary: #94A3B8;
             --border-color: rgba(148, 163, 184, 0.1);
+            --status-approved: #22c55e;
+            --status-pending: #f59e0b;
+            --status-rejected: #ef4444;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -28,119 +31,85 @@
             color: var(--text-primary);
         }
         .card { background-color: var(--card-bg); border: 1px solid var(--border-color); }
-        .primary-btn { background-color: var(--primary); color: #0A0F1F; font-weight: 700; transition: all 0.3s ease; box-shadow: 0 0 15px var(--primary-glow); }
-        .primary-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--primary-glow); }
+        .primary-btn { background: linear-gradient(90deg, #00F5D4, #00B7C4); color: #0A0F1F; font-weight: 700; transition: all 0.3s ease; box-shadow: 0 0 15px var(--primary-glow); }
+        .primary-btn:hover { transform: scale(1.03); box-shadow: 0 0 25px var(--primary-glow); }
         .glassmorphism { background: rgba(17, 24, 45, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border-color); }
         .nav-item.active svg, .nav-item.active p { color: var(--primary); }
         .nav-item.active .active-indicator { width: 8px; height: 8px; background-color: var(--primary); border-radius: 50%; margin-top: 4px; box-shadow: 0 0 10px var(--primary-glow); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .page { animation: fadeIn 0.4s ease-out; display: none; }
         .page.active { display: block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .progress-ring__circle { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
         .modal-backdrop { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
+        #toast { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
     </style>
 </head>
 <body class="bg-[var(--background)] text-[var(--text-primary)]">
 
+    <!-- Main App Container -->
     <div id="app-container" class="max-w-md mx-auto min-h-screen flex flex-col relative overflow-hidden hidden">
-        <!-- Main Content -->
         <main class="flex-grow p-4 pb-24 overflow-y-auto no-scrollbar">
-            <!-- Pages will be injected here -->
+            <!-- Home Page -->
             <div id="home" class="page space-y-6">
+                <!-- User Welcome Header -->
                 <div class="flex justify-between items-center">
                     <div>
-                        <p class="text-[var(--text-secondary)]">Welcome,</p>
-                        <h2 id="user-name" class="text-2xl font-bold">User</h2>
+                        <p class="text-[var(--text-secondary)]">স্বাগতম,</p>
+                        <h2 id="user-name" class="text-2xl font-bold">ব্যবহারকারী</h2>
                     </div>
                     <div id="user-avatar" class="w-12 h-12 rounded-full bg-cover bg-center border-2 border-[var(--primary)]"></div>
                 </div>
+                <!-- Balance Card -->
                 <div class="card p-6 rounded-2xl text-center border-2 border-[var(--primary)] shadow-[0_0_30px_var(--primary-glow)]">
-                    <p class="text-sm text-[var(--text-secondary)]">Total Balance</p>
+                    <p class="text-sm text-[var(--text-secondary)]">মোট ব্যালেন্স</p>
                     <p id="balance" class="text-4xl font-extrabold mt-2">0 Pts</p>
                 </div>
+                <!-- Daily Ads Progress Card -->
                 <div class="card p-4 rounded-2xl">
-                    <h3 class="font-bold mb-3 text-lg">Daily Ads Progress</h3>
+                    <h3 class="font-bold mb-3 text-lg">দৈনিক অ্যাডের অগ্রগতি</h3>
                     <div class="flex items-center space-x-4">
                         <div class="relative w-16 h-16">
                             <svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-progress-circle" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round"/></svg>
                             <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-sm font-bold" id="ad-progress-text">0/30</div>
                         </div>
-                        <div><p class="font-bold text-white">You've watched <span id="ads-watched-count-home">0</span> of 30 ads.</p><p class="text-sm text-[var(--text-secondary)]">Watch more ads to earn points!</p></div>
+                        <div><p class="font-bold text-white">আপনি ৩০টির মধ্যে <span id="ads-watched-count-home">0</span>টি অ্যাড দেখেছেন।</p><p class="text-sm text-[var(--text-secondary)]">পয়েন্ট অর্জনের জন্য আরও অ্যাড দেখুন!</p></div>
                     </div>
                 </div>
             </div>
-
-            <div id="tasks" class="page space-y-6">
-                 <h2 class="text-2xl font-bold text-center">Tasks & Rewards</h2>
-                <div class="card p-6 rounded-2xl text-center">
-                    <h3 class="font-bold text-xl mb-4">Watch Ads & Earn</h3>
-                    <div class="relative w-32 h-32 mx-auto mb-4">
-                        <svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-progress-circle-tasks" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round"/></svg>
-                        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center"><span id="ads-watched-count-tasks" class="text-3xl font-bold">0</span><span class="text-sm text-[var(--text-secondary)]">/ 30 Ads</span></div>
-                    </div>
-                    <button id="watch-ad-btn" class="primary-btn w-full py-3 rounded-lg">Watch Ad (+15 Pts)</button>
-                </div>
-            </div>
-            
-            <div id="refer" class="page space-y-6">
-                <h2 class="text-2xl font-bold text-center">Refer & Earn</h2>
-                <div class="card p-6 rounded-2xl text-center">
-                    <p class="text-[var(--text-secondary)]">Total Referrals</p>
-                    <p id="referral-count" class="text-5xl font-extrabold my-2">0</p>
-                    <p class="text-sm text-[var(--primary)]">+100 Points for each successful referral!</p>
-                </div>
-                <div class="card p-4 rounded-2xl">
-                    <label class="text-sm text-[var(--text-secondary)]">Your Referral Link</label>
-                    <div class="relative mt-2">
-                        <input id="referral-link" type="text" readonly class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 pr-12 text-sm">
-                        <button onclick="copyReferralLink()" class="absolute inset-y-0 right-0 flex items-center px-3 text-[var(--primary)]">Copy</button>
-                    </div>
-                    <p id="copy-success" class="text-center text-sm text-[var(--primary)] mt-2 hidden">Link copied!</p>
-                </div>
-            </div>
-
-            <div id="profile" class="page space-y-6">
-                 <div class="flex flex-col items-center text-center">
-                    <div id="profile-avatar" class="w-24 h-24 rounded-full bg-cover bg-center border-4 border-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)]"></div>
-                    <h2 id="profile-name" class="font-bold text-2xl mt-4">User</h2>
-                    <p id="profile-username" class="text-[var(--text-secondary)] text-sm">@username</p>
-                 </div>
-                 <div class="grid grid-cols-2 gap-4">
-                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">Total Earned</p><p id="total-earned" class="text-2xl font-bold mt-1">0 Pts</p></div>
-                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">Referral Bonus</p><p id="referral-bonus" class="text-2xl font-bold mt-1">0 Pts</p></div>
-                 </div>
-            </div>
+            <!-- Other pages go here -->
+            <div id="tasks" class="page"></div>
+            <div id="refer" class="page"></div>
+            <div id="withdraw" class="page"></div>
+            <div id="profile" class="page"></div>
         </main>
 
+        <!-- Bottom Navigation -->
         <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto glassmorphism">
             <div class="flex justify-around py-2">
-                <button data-page="home" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><p class="text-xs mt-1">Home</p><div class="active-indicator"></div></button>
-                <button data-page="tasks" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><p class="text-xs mt-1">Tasks</p><div class="active-indicator" style="display: none;"></div></button>
-                <button data-page="refer" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/></svg><p class="text-xs mt-1">Refer</p><div class="active-indicator" style="display: none;"></div></button>
-                <button data-page="profile" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><p class="text-xs mt-1">Profile</p><div class="active-indicator" style="display: none;"></div></button>
+                <button data-page="home" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><p class="text-xs mt-1">হোম</p><div class="active-indicator"></div></button>
+                <button data-page="tasks" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><p class="text-xs mt-1">টাস্ক</p><div class="active-indicator" style="display: none;"></div></button>
+                <button data-page="refer" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/></svg><p class="text-xs mt-1">রেফার</p><div class="active-indicator" style="display: none;"></div></button>
+                <button data-page="withdraw" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg><p class="text-xs mt-1">উইথড্র</p><div class="active-indicator" style="display: none;"></div></button>
+                <button data-page="profile" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><p class="text-xs mt-1">প্রোফাইল</p><div class="active-indicator" style="display: none;"></div></button>
             </div>
         </footer>
     </div>
     
     <!-- Loading/Error State -->
     <div id="loading-state" class="flex items-center justify-center min-h-screen text-center p-4">
-        <div>
-            <p id="loading-text" class="text-lg">Connecting to server...</p>
-        </div>
+        <div><p id="loading-text" class="text-lg">Airdrop Zone-এ সংযোগ করা হচ্ছে...</p></div>
     </div>
     
-    <!-- Ad Modal -->
-    <div id="ad-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
-        <div class="card rounded-2xl p-6 text-center w-64"><h3 class="font-bold text-lg">Watching Ad...</h3><div class="relative w-24 h-24 mx-auto my-4"><svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-timer-circle" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round" stroke-dasharray="100, 100" stroke-dashoffset="100"/></svg><div id="ad-timer-text" class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-2xl font-bold">30</div></div><p class="text-sm text-[var(--text-secondary)]">Please wait for the reward.</p></div>
-    </div>
+    <!-- Modals and Toasts -->
+    <div id="ad-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden"></div>
+    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full text-sm opacity-0 -translate-y-10"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // IMPORTANT: Replace with your actual Firebase config
         const firebaseConfig = {
           apiKey: "AIzaSyCJB3VeZ-eYiCBSM6ht_7L07GnDMZg6OHQ",
           authDomain: "myuser-d62cc.firebaseapp.com",
@@ -154,25 +123,24 @@
         const db = getFirestore(app);
         const tg = window.Telegram.WebApp;
 
-        let state = {
-            userId: null,
-            userData: {},
-            dailyAdLimit: 30,
+        let state = { userId: null, userData: {}, dailyAdLimit: 30 };
+
+        // --- TEMPLATES ---
+        const pageTemplates = {
+            tasks: ``, 
+            refer: ``,
+            withdraw: ``,
+            profile: ``
         };
-
-        function showLoadingError(message) {
-            document.getElementById('loading-text').innerText = message;
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('loading-state').classList.remove('hidden');
-        }
-
+        
+        // --- INITIALIZATION ---
         async function init() {
             try {
                 tg.ready();
                 tg.expand();
                 
                 if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-                    showLoadingError('Error: Please open this app through Telegram.');
+                    showLoadingError('অনুগ্রহ করে আপনার টেলিগ্রাম বট থেকে অ্যাপটি খুলুন।');
                     return;
                 }
                 
@@ -180,40 +148,27 @@
                 state.userId = user.id.toString();
 
                 const userDocRef = doc(db, "users", state.userId);
-                const userDocSnap = await getDoc(userDocRef);
+                let userDocSnap = await getDoc(userDocRef);
 
                 if (!userDocSnap.exists()) {
-                    // New user creation
                     const newUser = {
                         telegramId: user.id,
                         firstName: user.first_name,
                         lastName: user.last_name || '',
                         username: user.username || '',
-                        balance: 0,
-                        adsWatched: 0,
-                        lastAdWatchDate: '',
-                        referralCount: 0,
-                        totalEarned: 0,
-                        referralBonus: 0,
+                        photoUrl: user.photo_url || '',
+                        balance: 0, adsWatched: 0, lastAdWatchDate: '',
+                        referralCount: 0, totalEarned: 0, referralBonus: 0,
                         createdAt: new Date().toISOString(),
                     };
                     await setDoc(userDocRef, newUser);
-                    
-                    // Handle referral
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const refId = urlParams.get('startapp');
-                    if (refId && refId !== state.userId) {
-                        const referrerDocRef = doc(db, "users", refId);
-                        await updateDoc(referrerDocRef, {
-                            balance: increment(100),
-                            referralCount: increment(1),
-                            referralBonus: increment(100)
-                        });
-                        await updateDoc(userDocRef, { referredBy: refId });
-                    }
+                    await handleReferral(); // Referral check for new user
+                    userDocSnap = await getDoc(userDocRef); // Re-fetch the newly created doc
                 }
+                
+                state.userData = userDocSnap.data();
 
-                // Real-time listener for user data
+                // Real-time data listener
                 onSnapshot(userDocRef, (doc) => {
                     if (doc.exists()) {
                         state.userData = doc.data();
@@ -227,22 +182,51 @@
 
             } catch (error) {
                 console.error("Initialization Error:", error);
-                showLoadingError('Failed to initialize. Please try again.');
+                showLoadingError('অ্যাপ চালু করতে ব্যর্থ। আবার চেষ্টা করুন।');
+            }
+        }
+
+        async function handleReferral() {
+            // এই ফাংশনটি নতুন ব্যবহারকারী জয়েন করার সময় রেফারেল বোনাস দেয়।
+            const startParam = tg.initDataUnsafe.start_param;
+            // startParam আছে কি না এবং ব্যবহারকারী নিজেকে রেফার করছে কি না তা পরীক্ষা করে।
+            if (startParam && startParam !== state.userId) {
+                const referrerDocRef = doc(db, "users", startParam);
+                const referrerDocSnap = await getDoc(referrerDocRef);
+
+                if (referrerDocSnap.exists()) {
+                     // বোনাস প্রদান: রেফারকারীর ব্যালেন্স এবং রেফারেল সংখ্যা আপডেট করে।
+                    await updateDoc(referrerDocRef, {
+                        balance: increment(100),
+                        referralCount: increment(1),
+                        referralBonus: increment(100)
+                    });
+                     // নতুন ব্যবহারকারীর ডকুমেন্টে রেফারারের আইডি সেভ করে।
+                    await updateDoc(doc(db, "users", state.userId), { referredBy: startParam });
+                }
             }
         }
         
+        // --- UI RENDERING & UPDATES ---
         function updateUI() {
-            const { balance = 0, firstName = 'User', username, referralCount = 0, totalEarned = 0, referralBonus = 0 } = state.userData;
-            document.getElementById('balance').textContent = `${balance.toFixed(0)} Pts`;
-            document.getElementById('user-name').textContent = firstName;
-            document.getElementById('profile-name').textContent = firstName;
-            document.getElementById('profile-username').textContent = username ? `@${username}` : 'No username';
+            const { balance = 0, firstName = 'User', photoUrl } = state.userData;
             
-            const avatarUrl = `https://placehold.co/100x100/11182D/00F5D4?text=${firstName.charAt(0)}`;
-            document.getElementById('user-avatar').style.backgroundImage = `url('${avatarUrl}')`;
-            document.getElementById('profile-avatar').style.backgroundImage = `url('${avatarUrl}')`;
+            document.getElementById('balance').textContent = `${Math.floor(balance)} Pts`;
+            document.getElementById('user-name').textContent = firstName;
+            const avatar = document.getElementById('user-avatar');
+            const avatarUrl = photoUrl || `https://placehold.co/100x100/11182D/00F5D4?text=${firstName.charAt(0)}`;
+            avatar.style.backgroundImage = `url('${avatarUrl}')`;
 
-            // Ads Progress
+            updateAdProgress();
+
+            if(document.querySelector('.page.active')) {
+                const activePageId = document.querySelector('.page.active').id;
+                if(activePageId === 'profile') updateProfilePage();
+                if(activePageId === 'refer') updateReferPage();
+            }
+        }
+
+        function updateAdProgress() {
             const today = new Date().toISOString().split('T')[0];
             let adsWatchedToday = state.userData.lastAdWatchDate === today ? state.userData.adsWatched : 0;
             const adProgress = (adsWatchedToday / state.dailyAdLimit) * 100;
@@ -258,66 +242,93 @@
                 }
             });
 
-            document.getElementById('ad-progress-text').textContent = `${adsWatchedToday}/${state.dailyAdLimit}`;
-            document.getElementById('ads-watched-count-home').textContent = adsWatchedToday;
-            document.getElementById('ads-watched-count-tasks').textContent = adsWatchedToday;
+            const adProgressText = document.getElementById('ad-progress-text');
+            if(adProgressText) adProgressText.textContent = `${adsWatchedToday}/${state.dailyAdLimit}`;
+            const adsWatchedHome = document.getElementById('ads-watched-count-home');
+            if(adsWatchedHome) adsWatchedHome.textContent = adsWatchedToday;
 
-            // Refer page
-            document.getElementById('referral-count').textContent = referralCount;
-            const botUsername = "YOUR_TELEGRAM_BOT_USERNAME"; // TODO: Replace with your bot username
-            document.getElementById('referral-link').value = `https://t.me/${botUsername}/YOUR_APP_NAME?startapp=${state.userId}`;
+            const tasksPageAds = document.getElementById('ads-watched-count-tasks');
+            if(tasksPageAds) tasksPageAds.textContent = adsWatchedToday;
             
-            // Profile page
-            document.getElementById('total-earned').textContent = `${totalEarned.toFixed(0)} Pts`;
-            document.getElementById('referral-bonus').textContent = `${referralBonus.toFixed(0)} Pts`;
-
-            // Button state
             const watchAdBtn = document.getElementById('watch-ad-btn');
-            watchAdBtn.disabled = adsWatchedToday >= state.dailyAdLimit;
-            watchAdBtn.style.opacity = watchAdBtn.disabled ? '0.5' : '1';
+            if(watchAdBtn){
+                watchAdBtn.disabled = adsWatchedToday >= state.dailyAdLimit;
+                watchAdBtn.textContent = watchAdBtn.disabled ? "আজকের সীমা শেষ" : "অ্যাড দেখুন (+15 Pts)";
+                watchAdBtn.style.opacity = watchAdBtn.disabled ? '0.5' : '1';
+                watchAdBtn.style.cursor = watchAdBtn.disabled ? 'not-allowed' : 'pointer';
+            }
         }
         
-        // Navigation Logic
-        const pages = document.querySelectorAll('.page');
+        // --- NAVIGATION ---
         const navItems = document.querySelectorAll('.nav-item');
         window.navigateTo = function(pageId) {
-            pages.forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const targetPage = document.getElementById(pageId);
+            
+            if(targetPage.innerHTML.trim() === '') {
+                targetPage.innerHTML = pageTemplates[pageId];
+                attachEventListeners(pageId);
+            }
+            targetPage.classList.add('active');
+
             navItems.forEach(item => {
                 const indicator = item.querySelector('.active-indicator');
                 const isActive = item.dataset.page === pageId;
                 item.classList.toggle('active', isActive);
                 if (indicator) indicator.style.display = isActive ? 'block' : 'none';
             });
+            updateDynamicContent(pageId);
         }
         navItems.forEach(item => item.addEventListener('click', () => navigateTo(item.dataset.page)));
 
+        function updateDynamicContent(pageId){
+            if(pageId === 'home') updateUI();
+            if(pageId === 'tasks') updateAdProgress();
+            if(pageId === 'refer') updateReferPage();
+            if(pageId === 'withdraw') renderWithdrawalHistory();
+            if(pageId === 'profile') updateProfilePage();
+        }
+
+        // --- EVENT LISTENERS & LOGIC ---
+        function attachEventListeners(pageId) {
+            if (pageId === 'tasks') document.getElementById('watch-ad-btn').addEventListener('click', showAdModal);
+            if (pageId === 'refer') document.getElementById('copy-referral-btn').addEventListener('click', copyReferralLink);
+            if (pageId === 'withdraw') {
+                document.getElementById('withdraw-form').addEventListener('submit', handleWithdrawalRequest);
+                 document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => selectPaymentMethod(e.currentTarget));
+                });
+            }
+        }
+        
         // Ad Logic
-        document.getElementById('watch-ad-btn').addEventListener('click', async () => {
+        function showAdModal() {
             const today = new Date().toISOString().split('T')[0];
             let adsWatchedToday = state.userData.lastAdWatchDate === today ? state.userData.adsWatched : 0;
             if (adsWatchedToday >= state.dailyAdLimit) return;
             
             const adModal = document.getElementById('ad-modal');
+            adModal.innerHTML = `<div class="card rounded-2xl p-6 text-center w-64"><h3 class="font-bold text-lg">অ্যাড দেখা হচ্ছে...</h3><div class="relative w-24 h-24 mx-auto my-4"><svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-timer-circle" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round" stroke-dasharray="100, 100" stroke-dashoffset="100"/></svg><div id="ad-timer-text" class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-2xl font-bold">5</div></div><p class="text-sm text-[var(--text-secondary)]">পুরস্কারের জন্য অপেক্ষা করুন।</p></div>`;
             adModal.classList.remove('hidden');
 
-            let timeLeft = 5; // Using 5 seconds for quick demo
+            let timeLeft = 5; // Demo time
             const timerText = document.getElementById('ad-timer-text');
             const timerCircle = document.getElementById('ad-timer-circle');
             const radius = 15.9155;
             const circumference = 2 * Math.PI * radius;
+            timerCircle.style.strokeDashoffset = 0;
             
             const interval = setInterval(() => {
                 timeLeft--;
                 timerText.textContent = timeLeft;
-                timerCircle.style.strokeDashoffset = circumference - ((timeLeft/5)/100) * circumference;
+                timerCircle.style.strokeDashoffset = circumference - ((timeLeft/5) * circumference);
                 if(timeLeft <= 0) {
                     clearInterval(interval);
                     adModal.classList.add('hidden');
                     rewardUserForAd();
                 }
             }, 1000);
-        });
+        }
 
         async function rewardUserForAd() {
             const userDocRef = doc(db, "users", state.userId);
@@ -330,20 +341,205 @@
                 adsWatched: newAdsWatched,
                 lastAdWatchDate: today
             });
+            showToast("আপনি +15 পয়েন্ট পেয়েছেন!");
         }
         
-        // Referral Link Copy
-        window.copyReferralLink = function() {
+        // Referral Logic
+        function updateReferPage() {
+            document.getElementById('referral-count').textContent = state.userData.referralCount || 0;
+            document.getElementById('referral-bonus-earned').textContent = `${Math.floor(state.userData.referralBonus || 0)} Pts`;
+            
+            // !!! গুরুত্ত্বপূর্ণ: এখানে 'app' এর পরিবর্তে আপনার অ্যাপের আসল শর্ট নেমটি বসান !!!
+            // এই নামটি আপনি টেলিগ্রামের BotFather থেকে পাবেন।
+            const appShortName = 'app'; 
+            document.getElementById('referral-link').value = `https://t.me/Airdrop_zon_Bot/${appShortName}?startapp=${state.userId}`;
+        }
+        
+        function copyReferralLink() {
             const linkInput = document.getElementById('referral-link');
             navigator.clipboard.writeText(linkInput.value).then(() => {
-                const successMsg = document.getElementById('copy-success');
-                successMsg.classList.remove('hidden');
-                setTimeout(() => successMsg.classList.add('hidden'), 2000);
+                showToast("রেফারেল লিঙ্ক কপি করা হয়েছে!");
+                tg.HapticFeedback.notificationOccurred('success');
             });
         }
+        
+        // Withdraw Logic
+        function selectPaymentMethod(btn) {
+            document.querySelectorAll('.payment-method-btn').forEach(b => b.classList.replace('border-[var(--primary)]', 'border-transparent'));
+            btn.classList.replace('border-transparent', 'border-[var(--primary)]');
+            const method = btn.dataset.method;
+            document.getElementById('payment-method').value = method;
+            document.getElementById('account-label').textContent = `${method} বিবরণ`;
+            document.getElementById('account-details').placeholder = method === 'Binance' ? 'Binance Pay ID দিন' : 'অ্যাকাউন্ট নম্বর দিন';
+        }
 
+        async function handleWithdrawalRequest(e) {
+            e.preventDefault();
+            const form = e.target;
+            const amount = parseInt(form.amount.value);
+            const account = form.account.value;
+            const method = form.method.value;
+
+            if(!method) { showToast("একটি পেমেন্ট মাধ্যম বাছাই করুন।", true); return; }
+            if(!amount || amount <= 0 || !account) { showToast("অনুগ্রহ করে সমস্ত ঘর সঠিকভাবে পূরণ করুন।", true); return; }
+            if(amount > state.userData.balance) { showToast("অপর্যাপ্ত ব্যালেন্স।", true); return; }
+
+            try {
+                const withdrawalData = {
+                    userId: state.userId,
+                    amount, method, account,
+                    status: 'Pending',
+                    createdAt: new Date().toISOString()
+                };
+                await addDoc(collection(db, `users/${state.userId}/withdrawals`), withdrawalData);
+                await updateDoc(doc(db, "users", state.userId), { balance: increment(-amount) });
+                showToast("আপনার উইথড্র অনুরোধ পাঠানো হয়েছে!");
+                form.reset();
+                renderWithdrawalHistory();
+            } catch (error) {
+                showToast("অনুরোধ ব্যর্থ হয়েছে। আবার চেষ্টা করুন।", true);
+                console.error(error);
+            }
+        }
+        
+        function renderWithdrawalHistory() {
+            const historyList = document.getElementById('history-list');
+            if(!historyList) return;
+            const q = query(collection(db, `users/${state.userId}/withdrawals`), orderBy("createdAt", "desc"), limit(10));
+            onSnapshot(q, (querySnapshot) => {
+                if (querySnapshot.empty) {
+                    historyList.innerHTML = `<p class="text-center text-[var(--text-secondary)] text-sm">কোনো লেনদেনের ইতিহাস পাওয়া যায়নি।</p>`;
+                    return;
+                }
+                let html = '';
+                querySnapshot.forEach((doc) => {
+                    const item = doc.data();
+                    let statusColor;
+                    switch (item.status) {
+                        case 'Approved': statusColor = 'var(--status-approved)'; break;
+                        case 'Rejected': statusColor = 'var(--status-rejected)'; break;
+                        default: statusColor = 'var(--status-pending)'; break;
+                    }
+                    const date = new Date(item.createdAt).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric'});
+                    html += `
+                        <div class="flex justify-between items-center p-3 bg-[var(--background)] rounded-lg">
+                            <div><p class="font-semibold">${item.method} উইথড্র</p><p class="text-xs text-[var(--text-secondary)]">${date}</p></div>
+                            <div class="text-right"><p class="font-bold text-lg">${item.amount} Pts</p><p class="text-xs font-semibold" style="color: ${statusColor};">${item.status}</p></div>
+                        </div>`;
+                });
+                historyList.innerHTML = html;
+            });
+        }
+        
+        // Profile Page Logic
+        function updateProfilePage() {
+            const { firstName, username, photoUrl, totalEarned=0, referralBonus=0 } = state.userData;
+            document.getElementById('profile-name').textContent = firstName;
+            document.getElementById('profile-username').textContent = username ? `@${username}`: '';
+            const avatarUrl = photoUrl || `https://placehold.co/100x100/11182D/00F5D4?text=${firstName.charAt(0)}`;
+            document.getElementById('profile-avatar').style.backgroundImage = `url('${avatarUrl}')`;
+            document.getElementById('total-earned').textContent = `${Math.floor(totalEarned)} Pts`;
+            document.getElementById('profile-referral-bonus').textContent = `${Math.floor(referralBonus)} Pts`;
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function showLoadingError(message) {
+            document.getElementById('loading-text').innerText = message;
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.backgroundColor = isError ? 'var(--status-rejected)' : 'var(--status-approved)';
+            toast.classList.remove('opacity-0', '-translate-y-10');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-10');
+            }, 3000);
+        }
+        
+        // --- TEMPLATE DEFINITIONS ---
+        pageTemplates.tasks = `
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-center">টাস্ক ও পুরস্কার</h2>
+                <div class="card p-6 rounded-2xl text-center">
+                    <h3 class="font-bold text-xl mb-4">অ্যাড দেখুন ও আয় করুন</h3>
+                    <div class="relative w-32 h-32 mx-auto mb-4">
+                        <svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-progress-circle-tasks" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round"/></svg>
+                        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center"><span id="ads-watched-count-tasks" class="text-3xl font-bold">0</span><span class="text-sm text-[var(--text-secondary)]">/ 30 Ads</span></div>
+                    </div>
+                    <button id="watch-ad-btn" class="primary-btn w-full py-3 rounded-lg">অ্যাড দেখুন (+15 Pts)</button>
+                </div>
+            </div>`;
+
+        pageTemplates.refer = `
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-center">রেফার করুন ও আয় করুন</h2>
+                <div class="grid grid-cols-2 gap-4">
+                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">মোট রেফারেল</p><p id="referral-count" class="text-3xl font-bold mt-1">0</p></div>
+                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">রেফারেল বোনাস</p><p id="referral-bonus-earned" class="text-3xl font-bold mt-1">0 Pts</p></div>
+                 </div>
+                <div class="card p-6 rounded-2xl text-center">
+                     <p class="text-sm text-[var(--primary)]">প্রতিটি সফল রেফারেলে +100 পয়েন্ট বোনাস!</p>
+                </div>
+                <div class="card p-4 rounded-2xl">
+                    <label class="text-sm text-[var(--text-secondary)]">আপনার রেফারেল লিঙ্ক</label>
+                    <div class="relative mt-2">
+                        <input id="referral-link" type="text" readonly class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 pr-12 text-sm">
+                        <button id="copy-referral-btn" class="absolute inset-y-0 right-0 flex items-center px-3 text-[var(--primary)]">কপি</button>
+                    </div>
+                </div>
+            </div>`;
+        
+        pageTemplates.withdraw = `
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-center">পয়েন্ট উইথড্র</h2>
+                <div class="card p-4 rounded-2xl">
+                    <form id="withdraw-form" class="space-y-4">
+                        <div>
+                            <label class="text-sm text-[var(--text-secondary)]">পেমেন্ট মাধ্যম</label>
+                            <div class="grid grid-cols-3 gap-3 mt-2">
+                                <button type="button" class="payment-method-btn border-2 border-[var(--primary)] rounded-lg p-3 bg-[var(--background)]" data-method="Bkash"><img src="https://i.ibb.co/k5y4BSc/bkash.png" alt="Bkash" class="h-8 mx-auto"></button>
+                                <button type="button" class="payment-method-btn border-2 border-transparent rounded-lg p-3 bg-[var(--background)]" data-method="Nagad"><img src="https://i.ibb.co/JkY4P7n/nagad.png" alt="Nagad" class="h-8 mx-auto"></button>
+                                <button type="button" class="payment-method-btn border-2 border-transparent rounded-lg p-3 bg-[var(--background)]" data-method="Binance"><img src="https://i.ibb.co/3YYLgzq/binance.png" alt="Binance" class="h-8 mx-auto"></button>
+                            </div>
+                            <input type="hidden" id="payment-method" name="method" value="Bkash">
+                        </div>
+                        <div>
+                            <label class="text-sm text-[var(--text-secondary)]">পরিমাণ (Pts)</label>
+                            <input type="number" name="amount" placeholder="যেমন: 1000" class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 mt-1 focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
+                        </div>
+                        <div>
+                            <label id="account-label" class="text-sm text-[var(--text-secondary)]">Bkash বিবরণ</label>
+                            <input type="text" id="account-details" name="account" placeholder="অ্যাকাউন্ট নম্বর দিন" class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 mt-1 focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
+                        </div>
+                        <button type="submit" class="primary-btn w-full py-3 rounded-lg">উইথড্র অনুরোধ করুন</button>
+                    </form>
+                </div>
+                <div class="card p-4 rounded-2xl">
+                    <h3 class="font-semibold text-lg mb-3">উইথড্র হিস্টোরি</h3>
+                    <div id="history-list" class="space-y-3"></div>
+                </div>
+            </div>`;
+        
+        pageTemplates.profile = `
+            <div class="space-y-6">
+                 <div class="flex flex-col items-center text-center">
+                    <div id="profile-avatar" class="w-24 h-24 rounded-full bg-cover bg-center border-4 border-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)]"></div>
+                    <h2 id="profile-name" class="font-bold text-2xl mt-4">User</h2>
+                    <p id="profile-username" class="text-[var(--text-secondary)] text-sm">@username</p>
+                 </div>
+                 <div class="grid grid-cols-2 gap-4">
+                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">মোট আয়</p><p id="total-earned" class="text-2xl font-bold mt-1">0 Pts</p></div>
+                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">রেফারেল বোনাস</p><p id="profile-referral-bonus" class="text-2xl font-bold mt-1">0 Pts</p></div>
+                 </div>
+            </div>`;
+        
+        // --- START APP ---
         init();
     </script>
 </body>
-</html>
-
+                                             </html>
