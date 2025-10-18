@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Airdrop Zone</title>
-    <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -48,12 +45,9 @@
 </head>
 <body class="bg-[var(--background)] text-[var(--text-primary)]">
 
-    <!-- Main App Container -->
     <div id="app-container" class="max-w-md mx-auto min-h-screen flex flex-col relative overflow-hidden hidden">
         <main class="flex-grow p-4 pb-24 overflow-y-auto no-scrollbar">
-            <!-- Home Page -->
             <div id="home" class="page space-y-6">
-                <!-- User Welcome Header -->
                 <div class="flex justify-between items-center">
                     <div>
                         <p class="text-[var(--text-secondary)]">স্বাগতম,</p>
@@ -61,12 +55,10 @@
                     </div>
                     <div id="user-avatar" class="w-12 h-12 rounded-full bg-cover bg-center border-2 border-[var(--primary)]"></div>
                 </div>
-                <!-- Balance Card -->
                 <div class="card p-6 rounded-2xl text-center border-2 border-[var(--primary)] shadow-[0_0_30px_var(--primary-glow)]">
                     <p class="text-sm text-[var(--text-secondary)]">মোট ব্যালেন্স</p>
                     <p id="balance" class="text-4xl font-extrabold mt-2">0 Pts</p>
                 </div>
-                <!-- Daily Ads Progress Card -->
                 <div class="card p-4 rounded-2xl">
                     <h3 class="font-bold mb-3 text-lg">দৈনিক অ্যাডের অগ্রগতি</h3>
                     <div class="flex items-center space-x-4">
@@ -78,14 +70,12 @@
                     </div>
                 </div>
             </div>
-            <!-- Other pages go here -->
             <div id="tasks" class="page"></div>
             <div id="refer" class="page"></div>
             <div id="withdraw" class="page"></div>
             <div id="profile" class="page"></div>
         </main>
 
-        <!-- Bottom Navigation -->
         <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto glassmorphism">
             <div class="flex justify-around py-2">
                 <button data-page="home" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><p class="text-xs mt-1">হোম</p><div class="active-indicator"></div></button>
@@ -97,18 +87,17 @@
         </footer>
     </div>
     
-    <!-- Loading/Error State -->
     <div id="loading-state" class="flex items-center justify-center min-h-screen text-center p-4">
         <div><p id="loading-text" class="text-lg">Airdrop Zone-এ সংযোগ করা হচ্ছে...</p></div>
     </div>
     
-    <!-- Modals and Toasts -->
     <div id="ad-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden"></div>
     <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full text-sm opacity-0 -translate-y-10"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyCJB3VeZ-eYiCBSM6ht_7L07GnDMZg6OHQ",
@@ -121,6 +110,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app); // Auth সার্ভিস চালু করা হয়েছে
         const tg = window.Telegram.WebApp;
 
         let state = { userId: null, userData: {}, dailyAdLimit: 30 };
@@ -144,26 +134,41 @@
                     return;
                 }
                 
-                const user = tg.initDataUnsafe.user;
-                state.userId = user.id.toString();
+                // ১. ব্যবহারকারীকে বেনামীভাবে লগইন করানো হচ্ছে
+                const userCredential = await signInAnonymously(auth);
+                const authUser = userCredential.user;
+
+                if (!authUser) {
+                    showLoadingError('লগইন করতে ব্যর্থ। আবার চেষ্টা করুন।');
+                    return;
+                }
+                
+                // ২. authUser.uid-কে আমরা এখন state.userId হিসেবে ব্যবহার করবো
+                state.userId = authUser.uid; 
+                const tgUser = tg.initDataUnsafe.user;
 
                 const userDocRef = doc(db, "users", state.userId);
                 let userDocSnap = await getDoc(userDocRef);
 
                 if (!userDocSnap.exists()) {
+                    // ৩. নতুন ব্যবহারকারীর তথ্যের সাথে টেলিগ্রাম আইডিও সেভ করা হচ্ছে
                     const newUser = {
-                        telegramId: user.id,
-                        firstName: user.first_name,
-                        lastName: user.last_name || '',
-                        username: user.username || '',
-                        photoUrl: user.photo_url || '',
+                        authUid: state.userId, // ফায়ারবেস লগইন আইডি
+                        telegramId: tgUser.id, // টেলিগ্রাম আইডি
+                        firstName: tgUser.first_name,
+                        lastName: tgUser.last_name || '',
+                        username: tgUser.username || '',
+                        photoUrl: tgUser.photo_url || '',
                         balance: 0, adsWatched: 0, lastAdWatchDate: '',
                         referralCount: 0, totalEarned: 0, referralBonus: 0,
                         createdAt: new Date().toISOString(),
                     };
                     await setDoc(userDocRef, newUser);
-                    await handleReferral(); // Referral check for new user
-                    userDocSnap = await getDoc(userDocRef); // Re-fetch the newly created doc
+                    
+                    // ৪. রেফারেল চেক ( এটি নিচে আপডেট করা হয়েছে )
+                    await handleReferral(tgUser.id.toString()); 
+                    
+                    userDocSnap = await getDoc(userDocRef); // নতুন ডকুমেন্ট আবার লোড করা
                 }
                 
                 state.userData = userDocSnap.data();
@@ -182,27 +187,38 @@
 
             } catch (error) {
                 console.error("Initialization Error:", error);
-                showLoadingError('অ্যাপ চালু করতে ব্যর্থ। আবার চেষ্টা করুন।');
+                // ফায়ারবেস রুলস-এর ভুলের জন্য সাধারণত এই এররটি আসে
+                if (error.code === 'permission-denied') {
+                     showLoadingError('ডেটাবেস অ্যাক্সেস করতে সমস্যা হচ্ছে। রুলস চেক করুন।');
+                } else {
+                     showLoadingError('অ্যাপ চালু করতে ব্যর্থ। আবার চেষ্টা করুন।');
+                }
             }
         }
 
-        async function handleReferral() {
-            // এই ফাংশনটি নতুন ব্যবহারকারী জয়েন করার সময় রেফারেল বোনাস দেয়।
-            const startParam = tg.initDataUnsafe.start_param;
+        async function handleReferral(newUsersTelegramId) {
+            // এই ফাংশনটি নতুন ব্যবহারকারী জয়েন করার সময় রেফারেল তথ্য সেভ করে।
+            const startParam = tg.initDataUnsafe.start_param; // এটি রেফারারের টেলিগ্রাম আইডি
+            
             // startParam আছে কি না এবং ব্যবহারকারী নিজেকে রেফার করছে কি না তা পরীক্ষা করে।
-            if (startParam && startParam !== state.userId) {
-                const referrerDocRef = doc(db, "users", startParam);
-                const referrerDocSnap = await getDoc(referrerDocRef);
-
-                if (referrerDocSnap.exists()) {
-                     // বোনাস প্রদান: রেফারকারীর ব্যালেন্স এবং রেফারেল সংখ্যা আপডেট করে।
-                    await updateDoc(referrerDocRef, {
-                        balance: increment(100),
-                        referralCount: increment(1),
-                        referralBonus: increment(100)
+            if (startParam && startParam !== newUsersTelegramId) {
+                try {
+                    // আমরা শুধু নতুন ব্যবহারকারীর ডকুমেন্টে সেভ করবো কে তাকে রেফার করেছে
+                    // আপনার রুলস অনুযায়ী, একজন ব্যবহারকারী অন্য ব্যবহারকারীর ডকুমেন্টে লিখতে পারবে না
+                    // তাই আমরা রেফারারের ব্যালেন্স এখানে আপডেট করতে পারবো না।
+                    await updateDoc(doc(db, "users", state.userId), { 
+                        referredBy: startParam // startParam হলো রেফারারের টেলিগ্রাম আইডি
                     });
-                     // নতুন ব্যবহারকারীর ডকুমেন্টে রেফারারের আইডি সেভ করে।
-                    await updateDoc(doc(db, "users", state.userId), { referredBy: startParam });
+
+                    // বোনাস দেওয়ার কাজটি আপনাকে ম্যানুয়ালি বা একটি সার্ভার ফাংশন দিয়ে করতে হবে।
+                    // নিচের কোডটি ক্লায়েন্ট সাইড থেকে কাজ করবে না:
+                    /*
+                    const referrerDocRef = doc(db, "users", startParam); // <-- এটি কাজ করবে না
+                    await updateDoc(referrerDocRef, { balance: increment(100) });
+                    */
+
+                } catch (e) {
+                    console.error("Referral update failed (this is normal if updating other users): ", e.message);
                 }
             }
         }
@@ -346,21 +362,32 @@
         
         // Referral Logic
         function updateReferPage() {
+            if (!state.userData.telegramId) {
+                console.warn("Telegram ID not loaded yet for referral link.");
+                return;
+            }
             document.getElementById('referral-count').textContent = state.userData.referralCount || 0;
             document.getElementById('referral-bonus-earned').textContent = `${Math.floor(state.userData.referralBonus || 0)} Pts`;
             
             // !!! গুরুত্ত্বপূর্ণ: এখানে 'app' এর পরিবর্তে আপনার অ্যাপের আসল শর্ট নেমটি বসান !!!
             // এই নামটি আপনি টেলিগ্রামের BotFather থেকে পাবেন।
+            // আমি আপনার আগের কোড থেকে 'app' নামটি নিচ্ছি।
             const appShortName = 'app'; 
-            document.getElementById('referral-link').value = `https://t.me/Airdrop_zon_Bot/${appShortName}?startapp=${state.userId}`;
+            
+            // রেফারেল লিঙ্কটি এখন state.userData.telegramId দিয়ে তৈরি হবে, state.userId (authUid) দিয়ে নয়।
+            document.getElementById('referral-link').value = `https://t.me/Airdrop_zon_Bot/${appShortName}?startapp=${state.userData.telegramId}`;
         }
         
         function copyReferralLink() {
             const linkInput = document.getElementById('referral-link');
-            navigator.clipboard.writeText(linkInput.value).then(() => {
-                showToast("রেফারেল লিঙ্ক কপি করা হয়েছে!");
-                tg.HapticFeedback.notificationOccurred('success');
-            });
+            if (linkInput.value && !linkInput.value.includes('undefined')) {
+                navigator.clipboard.writeText(linkInput.value).then(() => {
+                    showToast("রেফারেল লিঙ্ক কপি করা হয়েছে!");
+                    tg.HapticFeedback.notificationOccurred('success');
+                });
+            } else {
+                showToast("লিঙ্ক এখনো তৈরি হয়নি।", true);
+            }
         }
         
         // Withdraw Logic
@@ -386,11 +413,13 @@
 
             try {
                 const withdrawalData = {
-                    userId: state.userId,
+                    userId: state.userId, // এটি authUid
+                    telegramId: state.userData.telegramId, // এটি টেলিগ্রাম আইডি
                     amount, method, account,
                     status: 'Pending',
                     createdAt: new Date().toISOString()
                 };
+                // এখানে রুলস অনুযায়ী ব্যবহারকারী নিজের সাব-কালেকশনে লিখতে পারবে
                 await addDoc(collection(db, `users/${state.userId}/withdrawals`), withdrawalData);
                 await updateDoc(doc(db, "users", state.userId), { balance: increment(-amount) });
                 showToast("আপনার উইথড্র অনুরোধ পাঠানো হয়েছে!");
@@ -488,7 +517,7 @@
                 <div class="card p-4 rounded-2xl">
                     <label class="text-sm text-[var(--text-secondary)]">আপনার রেফারেল লিঙ্ক</label>
                     <div class="relative mt-2">
-                        <input id="referral-link" type="text" readonly class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 pr-12 text-sm">
+                        <input id="referral-link" type="text" readonly class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 pr-12 text-sm" placeholder="লিঙ্ক লোড হচ্ছে...">
                         <button id="copy-referral-btn" class="absolute inset-y-0 right-0 flex items-center px-3 text-[var(--primary)]">কপি</button>
                     </div>
                 </div>
@@ -542,4 +571,4 @@
         init();
     </script>
 </body>
-                                             </html>
+</html>
