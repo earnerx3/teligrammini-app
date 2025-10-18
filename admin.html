@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earning App Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4e73df; --secondary: #858796; --success: #1cc88a; --danger: #e74a3b; --warning: #f6c23e;
+            --light: #f8f9fc; --dark: #5a5c69; --background: #f8f9fc; --text: #5a5c69; --card-bg: #ffffff;
+            --sidebar-bg: #4e73df; --sidebar-text: #fff; --sidebar-hover: #2e59d9;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Roboto", sans-serif; background-color: var(--background); color: var(--text); font-size: 16px; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* --- Login View --- */
+        #login-view { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .login-box { background: var(--card-bg); padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
+        .login-box h1 { margin-bottom: 25px; color: var(--dark); }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-weight: 500; margin-bottom: 8px; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.3s ease; }
+        .btn-primary { background-color: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { background-color: var(--sidebar-hover); }
+
+        /* --- Main Layout --- */
+        #admin-panel { display: none; width: 100%; height: 100%; flex-direction: row; }
+        .sidebar { width: 250px; background: var(--sidebar-bg); color: var(--sidebar-text); padding-top: 20px; flex-shrink: 0; display: flex; flex-direction: column; }
+        .sidebar-header { text-align: center; padding: 0 20px 20px 20px; font-size: 1.5rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .sidebar-nav { list-style: none; flex-grow: 1; }
+        .sidebar-nav a { display: block; padding: 15px 20px; color: var(--sidebar-text); text-decoration: none; transition: background 0.3s; font-weight: 500; border-left: 3px solid transparent; }
+        .sidebar-nav a.active, .sidebar-nav a:hover { background: var(--sidebar-hover); border-left-color: var(--warning); }
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
+        
+        .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- General Components --- */
+        h2 { font-size: 2rem; margin-bottom: 25px; color: var(--dark); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid var(--primary); }
+        .card.success { border-left-color: var(--success); }
+        .card.warning { border-left-color: var(--warning); }
+        .card.danger { border-left-color: var(--danger); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-header h3 { margin: 0; font-size: 1.25rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 15px; border: 1px solid #e3e6f0; text-align: left; vertical-align: middle; }
+        th { background-color: #f8f9fc; font-weight: 700; }
+        .actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        .status { padding: 5px 10px; border-radius: 20px; color: white; font-size: 12px; text-align: center; display: inline-block; }
+        .status-pending { background-color: var(--warning); }
+        .status-approved { background-color: var(--success); }
+        .status-rejected { background-color: var(--danger); }
+        
+        /* --- Modal --- */
+        .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; }
+        .modal-content { background-color: var(--card-bg); padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; }
+        .close-btn { font-size: 28px; cursor: pointer; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+    <div id="login-view">
+        <div class="login-box">
+            <h1>Admin Panel Login</h1>
+            <form id="login-form">
+                <div class="form-group"><label for="email">Email</label><input type="email" id="email" required></div>
+                <div class="form-group"><label for="password">Password</label><input type="password" id="password" required></div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <p id="login-error" style="color:red; margin-top:15px;"></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-panel">
+        <nav class="sidebar">
+            <div class="sidebar-header">Admin</div>
+            <ul class="sidebar-nav">
+                <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="#users" class="nav-link">Users</a></li>
+                <li><a href="#withdrawals" class="nav-link">Withdrawals</a></li>
+                <li><a href="#settings" class="nav-link">App Settings</a></li>
+                <li><a href="#tasks" class="nav-link">Dynamic Tasks</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-primary" style="width:100%;">Logout</button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <h2>Dashboard</h2>
+                <div class="grid">
+                    <div class="card success">
+                        <h3>Total Users</h3>
+                        <p id="total-users" style="font-size: 2.5rem; font-weight: 700;">0</p>
+                    </div>
+                    <div class="card warning">
+                        <h3>Pending Withdrawals</h3>
+                        <p id="pending-withdrawals" style="font-size: 2.5rem; font-weight: 700;">0</p>
+                    </div>
+                    <div class="card danger">
+                         <h3>Total Banned Users</h3>
+                        <p id="banned-users" style="font-size: 2.5rem; font-weight: 700;">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Page -->
+            <div id="users" class="page">
+                <h2>User Management</h2>
+                <input type="text" id="user-search" placeholder="Search by User ID or Username..." style="padding: 10px; margin-bottom: 20px; width: 100%; max-width: 400px; border-radius: 8px; border: 1px solid #ddd;">
+                <table>
+                    <thead><tr><th>User ID</th><th>Username</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="users-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Withdrawals Page -->
+            <div id="withdrawals" class="page">
+                <h2>Withdrawal Requests</h2>
+                <table>
+                    <thead><tr><th>User ID</th><th>Amount</th><th>Method</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="withdrawals-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <h2>App Settings</h2>
+                <div class="card">
+                    <form id="settings-form">
+                        <div class="grid">
+                            <div class="form-group"><label>Standard Ad Points</label><input type="number" id="standardAdPoints"></div>
+                            <div class="form-group"><label>Bonus Ad Points</label><input type="number" id="bonusAdPoints"></div>
+                            <div class="form-group"><label>Daily Task Limit</label><input type="number" id="dailyTaskLimit"></div>
+                            <div class="form-group"><label>Dollar Exchange Rate (points per $1)</label><input type="number" id="dollarExchangeRate"></div>
+                            <div class="form-group"><label>Referral Percentage (%)</label><input type="number" id="referralPercentage"></div>
+                            <div class="form-group"><label>Minimum Withdraw Amount</label><input type="number" id="minWithdrawAmount"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+                <br>
+                <div class="card">
+                    <h3>Payment Methods</h3>
+                    <table>
+                        <thead><tr><th>ID</th><th>Name</th><th>Action</th></tr></thead>
+                        <tbody id="payment-methods-table-body"></tbody>
+                    </table>
+                    <form id="add-payment-method-form" style="margin-top: 20px; display: flex; gap: 10px;">
+                        <input type="text" id="new-method-id" placeholder="Method ID (e.g., bkash)" required>
+                        <input type="text" id="new-method-name" placeholder="Method Name (e.g., Bkash)" required>
+                        <button type="submit" class="btn btn-primary btn-sm">Add Method</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tasks Page -->
+            <div id="tasks" class="page">
+                <h2>Dynamic Tasks</h2>
+                <button id="add-task-btn" class="btn btn-primary" style="margin-bottom: 20px;">Add New Task</button>
+                <table>
+                    <thead><tr><th>Name</th><th>Points</th><th>Timer (s)</th><th>Actions</th></tr></thead>
+                    <tbody id="tasks-table-body"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="user-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>User Details</h3>
+                <span class="close-btn">&times;</span>
+            </div>
+            <div id="user-details-content"></div>
+        </div>
+    </div>
+    
+    <div id="task-modal" class="modal">
+         <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="task-modal-title">Add New Task</h3>
+                <span class="close-btn">&times;</span>
+            </div>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group"><label>Task Name</label><input type="text" id="task-name" required></div>
+                    <div class="form-group"><label>Description</label><input type="text" id="task-description" required></div>
+                    <div class="form-group"><label>Points</label><input type="number" id="task-points" required></div>
+                    <div class="form-group"><label>Timer (seconds)</label><input type="number" id="task-timer" required></div>
+                </div>
+                 <div class="form-group"><label>Link URL</label><input type="url" id="task-link" required></div>
+                <button type="submit" class="btn btn-primary">Save Task</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // <!-- START: YOUR FIREBASE CONFIG -->
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJB3VeZ-eYiCBSM6ht_7L07GnDMZg6OHQ",
+            authDomain: "myuser-d62cc.firebaseapp.com",
+            projectId: "myuser-d62cc",
+            storageBucket: "myuser-d62cc.firebasestorage.app",
+            messagingSenderId: "906917838947",
+            appId: "1:906917838947:web:4c83c8e142536d35e3f856",
+            measurementId: "G-50SJK2KCZ8"
+        };
+        // <!-- END: YOUR FIREBASE CONFIG -->
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Global state
+        let allUsers = [];
+        let appConfig = {};
+
+        // --- AUTH & INITIALIZATION ---
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().isAdmin === true) {
+                    document.getElementById('login-view').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'flex';
+                    initializeApp();
+                } else {
+                    alert('You are not authorized to access this panel.');
+                    auth.signOut();
+                }
+            } else {
+                document.getElementById('login-view').style.display = 'flex';
+                document.getElementById('admin-panel').style.display = 'none';
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => document.getElementById('login-error').textContent = error.message);
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+
+        function initializeApp() {
+            loadDashboard();
+            loadUsers();
+            loadWithdrawals();
+            loadSettings();
+            loadTasks();
+        }
+
+        // --- NAVIGATION ---
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                
+                pages.forEach(page => page.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+                
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+        
+        // --- DASHBOARD ---
+        function loadDashboard() {
+            db.collection('users').onSnapshot(snapshot => {
+                document.getElementById('total-users').textContent = snapshot.size;
+                let bannedCount = 0;
+                snapshot.forEach(doc => {
+                    if (doc.data().isBanned === true) bannedCount++;
+                });
+                document.getElementById('banned-users').textContent = bannedCount;
+            });
+            db.collection('withdrawals').where('status', '==', 'Pending').onSnapshot(snapshot => {
+                document.getElementById('pending-withdrawals').textContent = snapshot.size;
+            });
+        }
+        
+        // --- USERS ---
+        function loadUsers() {
+            db.collection('users').onSnapshot(snapshot => {
+                allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUsersTable(allUsers);
+            });
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            users.forEach(user => {
+                const status = user.isBanned ? '<span class="status status-danger">Banned</span>' : '<span class="status status-success">Active</span>';
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${user.userId || user.id}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${(user.balance || 0).toLocaleString()}</td>
+                        <td>${status}</td>
+                        <td class="actions">
+                            <button class="btn btn-primary btn-sm" onclick="showUserDetails('${user.id}')">Details</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('user-search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allUsers.filter(u => (u.userId && u.userId.toString().includes(term)) || (u.username && u.username.toLowerCase().includes(term)));
+            renderUsersTable(filtered);
+        });
+
+        async function showUserDetails(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            const content = document.getElementById('user-details-content');
+            content.innerHTML = `
+                <p><strong>User ID (Document ID):</strong> ${user.id}</p>
+                <p><strong>Username:</strong> @${user.username || 'N/A'}</p>
+                <p><strong>Name:</strong> ${user.first_name || ''} ${user.last_name || ''}</p>
+                <hr style="margin: 15px 0;">
+                <h4>Stats</h4>
+                <p><strong>Current Balance:</strong> ${(user.balance || 0).toLocaleString()} Pts</p>
+                <p><strong>Total Earned:</strong> ${(user.totalEarnings || 0).toLocaleString()} Pts</p>
+                <p><strong>Referred By (User ID):</strong> ${user.referredBy || 'None'}</p>
+                <p><strong>Referral Earnings:</strong> ${(user.referralEarnings || 0).toLocaleString()} Pts</p>
+                <hr style="margin: 15px 0;">
+                <h4>Actions</h4>
+                <div class="form-group" style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="balance-change" placeholder="Add/Subtract points (e.g. 100 or -50)">
+                    <button class="btn btn-primary btn-sm" onclick="updateBalance('${userId}')">Update Balance</button>
+                </div>
+                <button class="btn ${user.isBanned ? 'btn-primary' : 'btn-danger'} btn-sm" onclick="toggleBan('${userId}', ${user.isBanned || false})">
+                    ${user.isBanned ? 'Unban User' : 'Ban User'}
+                </button>
+            `;
+            document.getElementById('user-details-modal').style.display = 'flex';
+        }
+
+        async function updateBalance(userId) {
+            const change = parseInt(document.getElementById('balance-change').value);
+            if (isNaN(change)) return alert('Invalid number');
+            await db.collection('users').doc(userId).update({
+                balance: firebase.firestore.FieldValue.increment(change)
+            });
+            alert('Balance updated!');
+            document.getElementById('user-details-modal').style.display = 'none';
+        }
+        
+        async function toggleBan(userId, isCurrentlyBanned) {
+            const newBanStatus = !isCurrentlyBanned;
+            const action = newBanStatus ? 'ban' : 'unban';
+            if(confirm(`Are you sure you want to ${action} this user?`)){
+                await db.collection('users').doc(userId).update({ isBanned: newBanStatus });
+                alert(`User has been ${action}ned.`);
+                document.getElementById('user-details-modal').style.display = 'none';
+            }
+        }
+
+        // --- WITHDRAWALS ---
+        function loadWithdrawals() {
+            db.collection('withdrawals').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                const tbody = document.getElementById('withdrawals-table-body');
+                tbody.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const actions = data.status === 'Pending' ? `
+                        <button class="btn btn-success btn-sm" onclick="updateWithdrawalStatus('${doc.id}', 'Approved')">Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="updateWithdrawalStatus('${doc.id}', 'Rejected', ${data.amount}, '${data.userId}')">Reject</button>
+                    ` : 'N/A';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${data.userId}</td>
+                            <td>${data.amount}</td>
+                            <td>${data.paymentMethodName}</td>
+                            <td>${data.paymentAddress}</td>
+                            <td><span class="status status-${data.status.toLowerCase()}">${data.status}</span></td>
+                            <td class="actions">${actions}</td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+        
+        async function updateWithdrawalStatus(docId, status, amount = 0, userId = '') {
+            // [FIXED] The reference now points to the root 'withdrawals' collection.
+            const withdrawalDocRef = db.collection('withdrawals').doc(docId);
+            
+            if (status === 'Rejected') {
+                if (confirm('Are you sure you want to reject this? The points will be returned to the user.')) {
+                    const batch = db.batch();
+                    // Update the status in the withdrawal document
+                    batch.update(withdrawalDocRef, { status: status });
+                    // Refund the points to the user
+                    batch.update(db.collection('users').doc(userId), { balance: firebase.firestore.FieldValue.increment(amount) });
+                    
+                    await batch.commit();
+                    alert('Withdrawal rejected and points returned.');
+                }
+            } else {
+                 await withdrawalDocRef.update({ status: status });
+                 alert('Withdrawal approved.');
+            }
+        }
+        
+        // --- SETTINGS ---
+        async function loadSettings() {
+             db.collection('config').doc('appConfig').onSnapshot(doc => {
+                if(doc.exists){
+                    appConfig = doc.data();
+                    Object.keys(appConfig).forEach(key => {
+                        const input = document.getElementById(key);
+                        if(input) input.value = appConfig[key];
+                    });
+                    renderPaymentMethods(appConfig.paymentMethods || []);
+                }
+             });
+        }
+        
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const settings = {
+                standardAdPoints: parseInt(document.getElementById('standardAdPoints').value),
+                bonusAdPoints: parseInt(document.getElementById('bonusAdPoints').value),
+                dailyTaskLimit: parseInt(document.getElementById('dailyTaskLimit').value),
+                dollarExchangeRate: parseInt(document.getElementById('dollarExchangeRate').value),
+                referralPercentage: parseInt(document.getElementById('referralPercentage').value),
+                minWithdrawAmount: parseInt(document.getElementById('minWithdrawAmount').value),
+            };
+            await db.collection('config').doc('appConfig').set(settings, { merge: true });
+            alert('Settings saved!');
+        });
+        
+        function renderPaymentMethods(methods) {
+            const tbody = document.getElementById('payment-methods-table-body');
+            tbody.innerHTML = '';
+            methods.forEach((method, index) => {
+                tbody.innerHTML += `
+                    <tr><td>${method.id}</td><td>${method.name}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deletePaymentMethod(${index})">Delete</button></td></tr>
+                `;
+            });
+        }
+        
+        document.getElementById('add-payment-method-form').addEventListener('submit', async(e) => {
+            e.preventDefault();
+            const newMethod = { id: document.getElementById('new-method-id').value, name: document.getElementById('new-method-name').value };
+            await db.collection('config').doc('appConfig').update({
+                paymentMethods: firebase.firestore.FieldValue.arrayUnion(newMethod)
+            });
+            e.target.reset();
+        });
+        
+        async function deletePaymentMethod(index) {
+            if(!confirm('Are you sure?')) return;
+            const updatedMethods = appConfig.paymentMethods.filter((_, i) => i !== index);
+            await db.collection('config').doc('appConfig').update({ paymentMethods: updatedMethods });
+        }
+        
+        // --- TASKS ---
+        function loadTasks() {
+            db.collection('config').doc('appConfig').onSnapshot(doc => {
+                if (doc.exists) {
+                    const tasks = doc.data().dynamicTasks || [];
+                    appConfig.dynamicTasks = tasks;
+                    renderTasksTable(tasks);
+                }
+            });
+        }
+        
+        function renderTasksTable(tasks){
+            const tbody = document.getElementById('tasks-table-body');
+            tbody.innerHTML = '';
+            tasks.forEach(task => {
+                tbody.innerHTML += `
+                    <tr><td>${task.name}</td><td>${task.points}</td><td>${task.timer}</td>
+                    <td class="actions">
+                        <button class="btn btn-primary btn-sm" onclick="editTask('${task.id}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTask('${task.id}')">Delete</button>
+                    </td></tr>
+                `;
+            });
+        }
+
+        document.getElementById('add-task-btn').addEventListener('click', () => {
+            document.getElementById('task-form').reset();
+            document.getElementById('task-id').value = '';
+            document.getElementById('task-modal-title').textContent = 'Add New Task';
+            document.getElementById('task-modal').style.display = 'flex';
+        });
+
+        document.getElementById('task-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('task-id').value;
+            const taskData = {
+                id: id || `task_${Date.now()}`, name: document.getElementById('task-name').value,
+                description: document.getElementById('task-description').value, points: parseInt(document.getElementById('task-points').value),
+                timer: parseInt(document.getElementById('task-timer').value), link: document.getElementById('task-link').value
+            };
+
+            let updatedTasks = appConfig.dynamicTasks || [];
+            if (id) {
+                updatedTasks = updatedTasks.map(t => t.id === id ? taskData : t);
+            } else {
+                updatedTasks.push(taskData);
+            }
+            await db.collection('config').doc('appConfig').update({ dynamicTasks: updatedTasks });
+            document.getElementById('task-modal').style.display = 'none';
+        });
+
+        function editTask(taskId) {
+            const task = (appConfig.dynamicTasks || []).find(t => t.id === taskId);
+            if(task){
+                document.getElementById('task-id').value = task.id;
+                document.getElementById('task-name').value = task.name;
+                document.getElementById('task-description').value = task.description;
+                document.getElementById('task-points').value = task.points;
+                document.getElementById('task-timer').value = task.timer;
+                document.getElementById('task-link').value = task.link;
+                document.getElementById('task-modal-title').textContent = 'Edit Task';
+                document.getElementById('task-modal').style.display = 'flex';
+            }
+        }
+        
+        async function deleteTask(taskId) {
+            if(!confirm('Are you sure?')) return;
+            const updatedTasks = (appConfig.dynamicTasks || []).filter(t => t.id !== taskId);
+            await db.collection('config').doc('appConfig').update({ dynamicTasks: updatedTasks });
+        }
+
+        // --- MODAL CLOSE LISTENERS ---
+        document.querySelectorAll('.modal .close-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.closest('.modal').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
