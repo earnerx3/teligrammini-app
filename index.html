@@ -1,574 +1,1573 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Airdrop Zone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earning App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Updated Ad Script with the new data-zone -->
+    <script src='//libtl.com/sdk.js' data-zone='10058398' data-sdk='show_10058398'></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+    
     <style>
         :root {
-            --background: #0A0F1F;
-            --card-bg: #11182D;
-            --primary: #00F5D4;
-            --primary-glow: rgba(0, 245, 212, 0.3);
-            --text-primary: #FFFFFF;
-            --text-secondary: #94A3B8;
-            --border-color: rgba(148, 163, 184, 0.1);
-            --status-approved: #22c55e;
-            --status-pending: #f59e0b;
-            --status-rejected: #ef4444;
+            --primary-gold: #f39c12;
+            --secondary-gold: #e67e22;
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --light-bg: #f8f9fa;
+            --text-dark: #1a1a2e;
+            --text-light: #ffffff;
+            --text-muted: #7f8c8d;
         }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background);
-            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #101827 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-x: hidden;
         }
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); }
-        .primary-btn { background: linear-gradient(90deg, #00F5D4, #00B7C4); color: #0A0F1F; font-weight: 700; transition: all 0.3s ease; box-shadow: 0 0 15px var(--primary-glow); }
-        .primary-btn:hover { transform: scale(1.03); box-shadow: 0 0 25px var(--primary-glow); }
-        .glassmorphism { background: rgba(17, 24, 45, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border-color); }
-        .nav-item.active svg, .nav-item.active p { color: var(--primary); }
-        .nav-item.active .active-indicator { width: 8px; height: 8px; background-color: var(--primary); border-radius: 50%; margin-top: 4px; box-shadow: 0 0 10px var(--primary-glow); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .page { animation: fadeIn 0.4s ease-out; display: none; }
-        .page.active { display: block; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .progress-ring__circle { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
-        .modal-backdrop { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
-        #toast { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: var(--light-bg);
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: var(--text-light);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid rgba(243, 156, 18, 0.2);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-profile {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-gold);
+        }
+
+        .header-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .header-info p {
+            font-size: 12px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Icon Styles */
+        .icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }
+        .icon-lg {
+            width: 24px;
+            height: 24px;
+        }
+        .icon-xl {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Page Transitions */
+        .page {
+            display: none;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for bottom nav */
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            border-radius: 20px;
+            padding: 25px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.4);
+        }
+        
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -50%;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(243, 156, 18, 0.15) 0%, transparent 70%);
+        }
+
+        .balance-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .balance-info h3 {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .balance-amount {
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dollar-equivalent {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .balance-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            border-top: 1px solid rgba(243, 156, 18, 0.3);
+            padding-top: 20px;
+            text-align: center;
+        }
+        
+        .balance-stat h4 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .balance-stat p {
+            font-size: 12px;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--text-light);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .card-header h3 {
+            font-size: 18px;
+            color: var(--text-dark);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(243, 156, 18, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Buttons */
+        .btn {
+            border: none;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--secondary-gold) 100%);
+            color: var(--text-light);
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(243, 156, 18, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: var(--text-light);
+            box-shadow: 0 8px 25px rgba(26, 26, 46, 0.3);
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(26, 26, 46, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        
+        /* Task Page */
+        .task-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .overview-item h3 {
+            font-size: 24px;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+        
+        .overview-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .task-actions .btn {
+            margin-bottom: 15px;
+        }
+        
+        .task-progress-bar {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 25px;
+            height: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary-gold), var(--secondary-gold));
+            border-radius: 25px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .task-list-container {
+            margin-top: 25px;
+        }
+
+        .task-item {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .task-item-info {
+            flex-grow: 1;
+        }
+
+        .task-item h4 {
+            font-size: 16px;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .task-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .task-item button {
+            background: var(--primary-gold);
+            color: var(--text-light);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 15px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            white-space: nowrap; /* Prevent button text from wrapping */
+        }
+
+        .task-item button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            background: var(--text-light);
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            min-width: 60px;
+            padding: 8px 0;
+        }
+
+        .nav-item.active {
+            color: var(--primary-gold);
+            transform: translateY(-3px);
+        }
+        
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        /* Custom Alert */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 46, 0.8);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .custom-alert {
+            background: var(--text-light);
+            border-radius: 20px;
+            padding: 30px 25px;
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .custom-alert.show {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .custom-alert-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold));
+            color: var(--text-light);
+        }
+
+        .custom-alert-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .custom-alert-message {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .custom-alert-btn {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+            color: var(--text-light);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        /* Refer Page */
+        .refer-details {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .refer-details h3 {
+            font-size: 18px;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .referral-code-box {
+            background-color: #f0f0f0;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            display: inline-block;
+            letter-spacing: 1px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .referral-share-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .referral-share-buttons .btn {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        .referral-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .referral-stat-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .referral-stat-item h4 {
+            font-size: 22px;
+            color: var(--primary-gold);
+            margin-bottom: 5px;
+        }
+
+        .referral-stat-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Withdraw Page */
+        .withdraw-form label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .withdraw-form select,
+        .withdraw-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 15px;
+            background-color: #fefefe;
+            color: var(--text-dark);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .withdraw-form input:focus,
+        .withdraw-form select:focus {
+            border-color: var(--primary-gold);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.2);
+        }
+
+        .withdraw-history-title {
+            font-size: 18px;
+            color: var(--text-dark);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .withdraw-history-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .withdraw-history-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .withdraw-history-item-details {
+            flex-grow: 1;
+        }
+
+        .withdraw-history-item h4 {
+            font-size: 16px;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .withdraw-history-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .withdraw-status {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .status-pending { background-color: #ffeb3b; color: #795548; }
+        .status-approved { background-color: #4CAF50; color: #ffffff; }
+        .status-rejected { background-color: #F44336; color: #ffffff; }
+
+        /* Profile Page */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .profile-picture {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--primary-gold);
+            margin-bottom: 15px;
+            object-fit: cover;
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.2);
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .profile-id {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .profile-stat-item {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .profile-stat-item h4 {
+            font-size: 20px;
+            color: var(--primary-gold);
+            margin-bottom: 5px;
+        }
+
+        .profile-stat-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .profile-actions .btn {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
-<body class="bg-[var(--background)] text-[var(--text-primary)]">
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <img id="headerProfilePic" src="https://placehold.co/80x80/1a1a2e/f39c12?text=U" alt="Profile" class="header-profile">
+                <div class="header-info">
+                    <h3 id="userName">User</h3>
+                    <p>
+                        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"></path></svg>
+                        <span id="headerBalanceValue">0</span>
+                        <span>(~<span id="headerDollarValue">0.00</span>$)</span>
+                    </p>
+                </div>
+            </div>
+        </div>
 
-    <div id="app-container" class="max-w-md mx-auto min-h-screen flex flex-col relative overflow-hidden hidden">
-        <main class="flex-grow p-4 pb-24 overflow-y-auto no-scrollbar">
-            <div id="home" class="page space-y-6">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-[var(--text-secondary)]">স্বাগতম,</p>
-                        <h2 id="user-name" class="text-2xl font-bold">ব্যবহারকারী</h2>
+        <!-- Home Page -->
+        <div id="homePage" class="page active">
+            <div class="balance-card">
+                <div class="balance-header">
+                     <div class="balance-info">
+                        <h3>Total Balance</h3>
+                        <p class="dollar-equivalent">≈ $<span id="totalDollarAmount">0.00</span></p>
                     </div>
-                    <div id="user-avatar" class="w-12 h-12 rounded-full bg-cover bg-center border-2 border-[var(--primary)]"></div>
+                    <div class="balance-amount">
+                       <span id="totalBalanceAmount">0</span>
+                       <svg class="icon-lg" style="color: var(--primary-gold)" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"></path></svg>
+                    </div>
                 </div>
-                <div class="card p-6 rounded-2xl text-center border-2 border-[var(--primary)] shadow-[0_0_30px_var(--primary-glow)]">
-                    <p class="text-sm text-[var(--text-secondary)]">মোট ব্যালেন্স</p>
-                    <p id="balance" class="text-4xl font-extrabold mt-2">0 Pts</p>
+                <div class="balance-stats">
+                    <div class="balance-stat">
+                        <h4><span id="balanceTotal">0</span></h4>
+                        <p>Current Points</p>
+                    </div>
+                    <div class="balance-stat">
+                        <h4><span id="balanceEarning">0</span></h4>
+                        <p>Total Earned</p>
+                    </div>
                 </div>
-                <div class="card p-4 rounded-2xl">
-                    <h3 class="font-bold mb-3 text-lg">দৈনিক অ্যাডের অগ্রগতি</h3>
-                    <div class="flex items-center space-x-4">
-                        <div class="relative w-16 h-16">
-                            <svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-progress-circle" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round"/></svg>
-                            <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-sm font-bold" id="ad-progress-text">0/30</div>
+            </div>
+
+            <div class="card">
+                 <div class="card-header">
+                    <h3>Daily Tasks</h3>
+                    <div class="card-icon">
+                        <svg class="icon-lg" style="color: var(--primary-gold)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                </div>
+                <p class="card-desc">Complete your daily tasks by watching ads to earn points.</p>
+                <button class="btn btn-primary" onclick="navigateToPage('adsPage')">Start Earning</button>
+            </div>
+            
+             <div class="card">
+                 <div class="card-header">
+                    <h3>Invite Friends</h3>
+                    <div class="card-icon">
+                         <svg class="icon-lg" style="color: var(--primary-gold)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                    </div>
+                </div>
+                <p class="card-desc">Get a percentage of their earnings forever when you invite your friends!</p>
+                <button class="btn btn-secondary" onclick="navigateToPage('referPage')">Invite Now</button>
+            </div>
+        </div>
+
+        <!-- Ads Task Page -->
+        <div id="adsPage" class="page">
+            <div class="card">
+                <div class="overview-header" style="text-align:center; margin-bottom: 20px;">
+                    <h2>Ads Task Overview</h2>
+                </div>
+                <div class="task-overview">
+                    <div class="overview-item">
+                        <h3 id="dailyTasksCompleted">0/0</h3>
+                        <p>Tasks Today</p>
+                         <div class="task-progress-bar">
+                           <div id="taskProgressBar" class="progress"></div>
                         </div>
-                        <div><p class="font-bold text-white">আপনি ৩০টির মধ্যে <span id="ads-watched-count-home">0</span>টি অ্যাড দেখেছেন।</p><p class="text-sm text-[var(--text-secondary)]">পয়েন্ট অর্জনের জন্য আরও অ্যাড দেখুন!</p></div>
+                    </div>
+                    <div class="overview-item">
+                        <h3><span id="adsCurrentBalance">0</span></h3>
+                        <p>Current Points</p>
                     </div>
                 </div>
             </div>
-            <div id="tasks" class="page"></div>
-            <div id="refer" class="page"></div>
-            <div id="withdraw" class="page"></div>
-            <div id="profile" class="page"></div>
-        </main>
-
-        <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto glassmorphism">
-            <div class="flex justify-around py-2">
-                <button data-page="home" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><p class="text-xs mt-1">হোম</p><div class="active-indicator"></div></button>
-                <button data-page="tasks" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><p class="text-xs mt-1">টাস্ক</p><div class="active-indicator" style="display: none;"></div></button>
-                <button data-page="refer" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/></svg><p class="text-xs mt-1">রেফার</p><div class="active-indicator" style="display: none;"></div></button>
-                <button data-page="withdraw" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg><p class="text-xs mt-1">উইথড্র</p><div class="active-indicator" style="display: none;"></div></button>
-                <button data-page="profile" class="nav-item flex flex-col items-center w-20"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><p class="text-xs mt-1">প্রোফাইল</p><div class="active-indicator" style="display: none;"></div></button>
+            <div class="task-actions">
+                 <button class="btn btn-primary" id="startTaskBtn">
+                    <svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+                    Watch Ad & Earn (<span id="standardAdPoints">0</span> pts)
+                </button>
+                <button class="btn btn-secondary" id="watchRewardedAdBtn">
+                     <svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm-2 14H6V8h12v10z"></path></svg>
+                    Watch Bonus Ad (<span id="bonusAdPoints">0</span> pts)
+                </button>
             </div>
-        </footer>
+
+            <div class="card task-list-container">
+                <div class="card-header">
+                    <h3>Other Earning Tasks</h3>
+                </div>
+                <div id="dynamicTasksList">
+                    <!-- Dynamic tasks will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Refer Page -->
+        <div id="referPage" class="page">
+             <div class="card">
+                <div class="overview-header" style="text-align:center; margin-bottom: 20px;">
+                    <h2>Invite Friends & Earn More!</h2>
+                    <p class="card-desc" style="margin-top:15px;">Share your referral code and earn a percentage of your friends' earnings.</p>
+                </div>
+                <div class="refer-details">
+                    <h3>Your Referral Code:</h3>
+                    <div class="referral-code-box" id="userReferralCode">LOADING...</div>
+                    <button class="btn btn-primary" id="copyReferralCodeBtn">
+                         <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>
+                        Copy Code
+                    </button>
+                    <div class="referral-share-buttons" style="margin-top: 15px;">
+                        <button class="btn btn-secondary" id="shareOnTelegramBtn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6.241 8.809l-2.733 12.872c-.144.646-.516.804-1.077.513l-4.148-3.085-1.996 1.921c-.22.213-.393.385-.758.385l.23-.974 4.326-4.049 4.96-7.85c.218-.352-.063-.535-.477-.384l-6.19 3.868-4.072-1.272c-.633-.198-.992-.303-.98-.644.004-.11.134-.202.408-.315.617-.257 12.409-4.57 13.064-4.82.72-.27 1.341.171 1.054.78z"></path></svg>
+                            Telegram
+                        </button>
+                        <!-- Add more share buttons as needed -->
+                    </div>
+                </div>
+                <p class="card-desc">You earn <span id="referralPercentage">0%</span> of your referred friends' earnings!</p>
+                <div class="referral-stats">
+                    <div class="referral-stat-item">
+                        <h4 id="referredUsersCount">0</h4>
+                        <p>Total Friends Invited</p>
+                    </div>
+                    <div class="referral-stat-item">
+                        <h4 id="referralPointsEarned">0</h4>
+                        <p>Points from Referrals</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Withdraw Page -->
+        <div id="withdrawPage" class="page">
+             <div class="card">
+                <div class="overview-header" style="text-align:center; margin-bottom: 20px;">
+                    <h2>Withdraw Your Earnings</h2>
+                    <p class="card-desc" style="margin-top:15px;">Your current balance: <span id="withdrawCurrentBalance">0</span> points</p>
+                    <p class="card-desc">Minimum withdrawal amount: <span id="minWithdrawAmount">0</span> points</p>
+                </div>
+                <div class="withdraw-form">
+                    <label for="paymentMethod">Select Payment Method</label>
+                    <select id="paymentMethod">
+                        <!-- Options will be loaded from admin panel -->
+                    </select>
+
+                    <label for="withdrawAmount">Amount to Withdraw (Points)</label>
+                    <input type="number" id="withdrawAmount" placeholder="Enter points to withdraw" min="0">
+
+                    <label for="paymentAddress">Payment Address / Account Number</label>
+                    <input type="text" id="paymentAddress" placeholder="e.g., wallet address, phone number">
+
+                    <button class="btn btn-primary" id="submitWithdrawBtn">Submit Withdrawal Request</button>
+                </div>
+
+                <h3 class="withdraw-history-title">Withdrawal History</h3>
+                <ul id="withdrawHistoryList" class="withdraw-history-list">
+                    <!-- Withdrawal history items will be loaded here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profilePage" class="page">
+             <div class="card">
+                <div class="profile-header">
+                    <img id="profilePagePic" src="https://placehold.co/100x100/1a1a2e/f39c12?text=U" alt="Profile" class="profile-picture">
+                    <h2 class="profile-name" id="profilePageName">User Name</h2>
+                    <p class="profile-id">ID: <span id="profilePageId">N/A</span></p>
+                </div>
+
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-item">
+                        <h4><span id="profileBalance">0</span></h4>
+                        <p>Current Balance</p>
+                    </div>
+                    <div class="profile-stat-item">
+                        <h4><span id="profileTotalEarnings">0</span></h4>
+                        <p>Total Earned</p>
+                    </div>
+                    <div class="profile-stat-item">
+                        <h4><span id="profileReferralEarnings">0</span></h4>
+                        <p>Referral Earnings</p>
+                    </div>
+                    <div class="profile-stat-item">
+                        <h4><span id="profileDailyTasks">0/0</span></h4>
+                        <p>Tasks Today</p>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn btn-secondary" onclick="navigateToPage('adsPage')">View Tasks</button>
+                    <button class="btn btn-secondary" onclick="navigateToPage('withdrawPage')">Make Withdrawal</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active" data-page="homePage">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item" data-page="adsPage">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 8V7l-3 2-3-2v1l3 2 3-2zm1-5H2C.9 3 0 3.9 0 5v14c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM8 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm6 12H2v-1.4c0-2 4-3.1 6-3.1s6 1.1 6 3.1V18zm6-1.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path></svg>
+                <div class="nav-label">Tasks</div>
+            </div>
+            <div class="nav-item" data-page="referPage">
+                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path></svg>
+                <div class="nav-label">Refer</div>
+            </div>
+            <div class="nav-item" data-page="withdrawPage">
+                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
+                <div class="nav-label">Withdraw</div>
+            </div>
+            <div class="nav-item" data-page="profilePage">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+                <div class="nav-label">Profile</div>
+            </div>
+        </div>
     </div>
-    
-    <div id="loading-state" class="flex items-center justify-center min-h-screen text-center p-4">
-        <div><p id="loading-text" class="text-lg">Airdrop Zone-এ সংযোগ করা হচ্ছে...</p></div>
+
+    <div class="custom-alert-overlay" id="customAlertOverlay">
+        <div class="custom-alert" id="customAlert">
+            <div class="custom-alert-icon" id="customAlertIcon">🎉</div>
+            <div class="custom-alert-title" id="customAlertTitle">Success!</div>
+            <div class="custom-alert-message" id="customAlertMessage">Operation completed.</div>
+            <button class="custom-alert-btn" onclick="closeCustomAlert()">OK</button>
+        </div>
     </div>
-    
-    <div id="ad-modal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden"></div>
-    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full text-sm opacity-0 -translate-y-10"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    <!-- Timer Modal for Link-based Tasks -->
+    <div class="custom-alert-overlay" id="taskTimerOverlay">
+        <div class="custom-alert">
+            <div class="custom-alert-icon" id="taskTimerIcon">⏳</div>
+            <div class="custom-alert-title" id="taskTimerTitle">Task In Progress</div>
+            <div class="custom-alert-message" id="taskTimerMessage">Please wait for <span id="taskTimerCountdown">15</span> seconds.</div>
+            <button class="custom-alert-btn" id="claimTaskPointsBtn" style="display:none;">Claim Points</button>
+        </div>
+    </div>
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyCJB3VeZ-eYiCBSM6ht_7L07GnDMZg6OHQ",
-          authDomain: "myuser-d62cc.firebaseapp.com",
-          projectId: "myuser-d62cc",
-          storageBucket: "myuser-d62cc.firebasestorage.app",
-          messagingSenderId: "906917838947",
-          appId: "1:906917838947:web:4c83c8e142536d35e3f856",
-        };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app); // Auth সার্ভিস চালু করা হয়েছে
+    <script>
         const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-        let state = { userId: null, userData: {}, dailyAdLimit: 30 };
-
-        // --- TEMPLATES ---
-        const pageTemplates = {
-            tasks: ``, 
-            refer: ``,
-            withdraw: ``,
-            profile: ``
+        const defaultProfilePic = 'https://placehold.co/80x80/1a1a2e/f39c12?text=U';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJB3VeZ-eYiCBSM6ht_7L07GnDMZg6OHQ",
+            authDomain: "myuser-d62cc.firebaseapp.com",
+            projectId: "myuser-d62cc",
+            storageBucket: "myuser-d62cc.firebasestorage.app",
+            messagingSenderId: "906917838947",
+            appId: "1:906917838947:web:4c83c8e142536d35e3f856",
+            measurementId: "G-50SJK2KCZ8"
         };
+    
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const analytics = firebase.analytics(); // If you enabled analytics
+
+        let currentUser = null; // To store user data from Firestore
+        let appConfig = null;   // To store app-wide configurations from Admin Panel
+
+        // Helper Functions
+        function pointsToDollar(points) {
+           if (!appConfig || !appConfig.dollarExchangeRate) return (0).toFixed(2); // Default if config not loaded
+            return (points / appConfig.dollarExchangeRate).toFixed(2);
+        }
         
-        // --- INITIALIZATION ---
-        async function init() {
+        function checkDailyReset(userData) {
+            const today = new Date().toDateString();
+            if (userData.lastTaskDate !== today) {
+                db.collection('users').doc(userData.userId).update({
+                    dailyTasksCompleted: 0,
+                    lastTaskDate: today
+                })
+                .then(() => {
+                    console.log("Daily tasks reset successfully.");
+                    currentUser.dailyTasksCompleted = 0;
+                    currentUser.lastTaskDate = today;
+                    updateUI();
+                })
+                .catch(error => {
+                    console.error("Error resetting daily tasks: ", error);
+                });
+            }
+        }
+
+        async function fetchAppConfig() {
             try {
-                tg.ready();
-                tg.expand();
-                
-                if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-                    showLoadingError('অনুগ্রহ করে আপনার টেলিগ্রাম বট থেকে অ্যাপটি খুলুন।');
-                    return;
-                }
-                
-                // ১. ব্যবহারকারীকে বেনামীভাবে লগইন করানো হচ্ছে
-                const userCredential = await signInAnonymously(auth);
-                const authUser = userCredential.user;
-
-                if (!authUser) {
-                    showLoadingError('লগইন করতে ব্যর্থ। আবার চেষ্টা করুন।');
-                    return;
-                }
-                
-                // ২. authUser.uid-কে আমরা এখন state.userId হিসেবে ব্যবহার করবো
-                state.userId = authUser.uid; 
-                const tgUser = tg.initDataUnsafe.user;
-
-                const userDocRef = doc(db, "users", state.userId);
-                let userDocSnap = await getDoc(userDocRef);
-
-                if (!userDocSnap.exists()) {
-                    // ৩. নতুন ব্যবহারকারীর তথ্যের সাথে টেলিগ্রাম আইডিও সেভ করা হচ্ছে
-                    const newUser = {
-                        authUid: state.userId, // ফায়ারবেস লগইন আইডি
-                        telegramId: tgUser.id, // টেলিগ্রাম আইডি
-                        firstName: tgUser.first_name,
-                        lastName: tgUser.last_name || '',
-                        username: tgUser.username || '',
-                        photoUrl: tgUser.photo_url || '',
-                        balance: 0, adsWatched: 0, lastAdWatchDate: '',
-                        referralCount: 0, totalEarned: 0, referralBonus: 0,
-                        createdAt: new Date().toISOString(),
-                    };
-                    await setDoc(userDocRef, newUser);
-                    
-                    // ৪. রেফারেল চেক ( এটি নিচে আপডেট করা হয়েছে )
-                    await handleReferral(tgUser.id.toString()); 
-                    
-                    userDocSnap = await getDoc(userDocRef); // নতুন ডকুমেন্ট আবার লোড করা
-                }
-                
-                state.userData = userDocSnap.data();
-
-                // Real-time data listener
-                onSnapshot(userDocRef, (doc) => {
-                    if (doc.exists()) {
-                        state.userData = doc.data();
-                        updateUI();
-                    }
-                });
-
-                document.getElementById('loading-state').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-                navigateTo('home');
-
-            } catch (error) {
-                console.error("Initialization Error:", error);
-                // ফায়ারবেস রুলস-এর ভুলের জন্য সাধারণত এই এররটি আসে
-                if (error.code === 'permission-denied') {
-                     showLoadingError('ডেটাবেস অ্যাক্সেস করতে সমস্যা হচ্ছে। রুলস চেক করুন।');
+                const doc = await db.collection('config').doc('appConfig').get();
+                if (doc.exists) {
+                    appConfig = doc.data();
+                    console.log("App configuration loaded:", appConfig);
                 } else {
-                     showLoadingError('অ্যাপ চালু করতে ব্যর্থ। আবার চেষ্টা করুন।');
+                    console.log("No app configuration found, setting defaults.");
+                    // Set sensible defaults if no config exists
+                    appConfig = {
+                        standardAdPoints: 10,
+                        bonusAdPoints: 20,
+                        dailyTaskLimit: 50,
+                        dollarExchangeRate: 1000, // 1000 points = $1
+                        referralPercentage: 10, // 10% of referred user's earnings
+                        minWithdrawAmount: 5000,
+                        paymentMethods: [
+                            { id: 'payeer', name: 'Payeer' },
+                            { id: 'usdt', name: 'USDT (TRC20)' },
+                        ],
+                        dynamicTasks: [] // Admin can add tasks here
+                    };
                 }
+            } catch (error) {
+                console.error("Error fetching app config:", error);
+                 // Fallback to default config on error
+                appConfig = { standardAdPoints: 10, bonusAdPoints: 20, dailyTaskLimit: 50, dollarExchangeRate: 1000, referralPercentage: 10, minWithdrawAmount: 5000, paymentMethods: [], dynamicTasks: [] };
             }
         }
 
-        async function handleReferral(newUsersTelegramId) {
-            // এই ফাংশনটি নতুন ব্যবহারকারী জয়েন করার সময় রেফারেল তথ্য সেভ করে।
-            const startParam = tg.initDataUnsafe.start_param; // এটি রেফারারের টেলিগ্রাম আইডি
-            
-            // startParam আছে কি না এবং ব্যবহারকারী নিজেকে রেফার করছে কি না তা পরীক্ষা করে।
-            if (startParam && startParam !== newUsersTelegramId) {
-                try {
-                    // আমরা শুধু নতুন ব্যবহারকারীর ডকুমেন্টে সেভ করবো কে তাকে রেফার করেছে
-                    // আপনার রুলস অনুযায়ী, একজন ব্যবহারকারী অন্য ব্যবহারকারীর ডকুমেন্টে লিখতে পারবে না
-                    // তাই আমরা রেফারারের ব্যালেন্স এখানে আপডেট করতে পারবো না।
-                    await updateDoc(doc(db, "users", state.userId), { 
-                        referredBy: startParam // startParam হলো রেফারারের টেলিগ্রাম আইডি
-                    });
-
-                    // বোনাস দেওয়ার কাজটি আপনাকে ম্যানুয়ালি বা একটি সার্ভার ফাংশন দিয়ে করতে হবে।
-                    // নিচের কোডটি ক্লায়েন্ট সাইড থেকে কাজ করবে না:
-                    /*
-                    const referrerDocRef = doc(db, "users", startParam); // <-- এটি কাজ করবে না
-                    await updateDoc(referrerDocRef, { balance: increment(100) });
-                    */
-
-                } catch (e) {
-                    console.error("Referral update failed (this is normal if updating other users): ", e.message);
-                }
-            }
-        }
-        
-        // --- UI RENDERING & UPDATES ---
+        // UI Update Functions
         function updateUI() {
-            const { balance = 0, firstName = 'User', photoUrl } = state.userData;
-            
-            document.getElementById('balance').textContent = `${Math.floor(balance)} Pts`;
-            document.getElementById('user-name').textContent = firstName;
-            const avatar = document.getElementById('user-avatar');
-            const avatarUrl = photoUrl || `https://placehold.co/100x100/11182D/00F5D4?text=${firstName.charAt(0)}`;
-            avatar.style.backgroundImage = `url('${avatarUrl}')`;
+            if (!currentUser || !appConfig) return; // Wait until both are loaded
 
-            updateAdProgress();
-
-            if(document.querySelector('.page.active')) {
-                const activePageId = document.querySelector('.page.active').id;
-                if(activePageId === 'profile') updateProfilePage();
-                if(activePageId === 'refer') updateReferPage();
+            // User info
+            const userDataFromTelegram = tg.initDataUnsafe.user;
+            if (userDataFromTelegram) {
+                const fullName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || 'User';
+                document.getElementById('headerProfilePic').src = currentUser.photo_url || defaultProfilePic;
+                document.getElementById('userName').textContent = fullName;
             }
-        }
 
-        function updateAdProgress() {
-            const today = new Date().toISOString().split('T')[0];
-            let adsWatchedToday = state.userData.lastAdWatchDate === today ? state.userData.adsWatched : 0;
-            const adProgress = (adsWatchedToday / state.dailyAdLimit) * 100;
-            const radius = 15.9155;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (adProgress / 100) * circumference;
+            // Balances
+            const balance = currentUser.balance || 0;
+            const totalEarnings = currentUser.totalEarnings || 0;
+            const referralEarnings = currentUser.referralEarnings || 0;
+
+            document.getElementById('headerBalanceValue').textContent = balance.toLocaleString();
+            document.getElementById('headerDollarValue').textContent = pointsToDollar(balance);
+            document.getElementById('totalBalanceAmount').textContent = balance.toLocaleString();
+            document.getElementById('totalDollarAmount').textContent = pointsToDollar(balance);
+            document.getElementById('balanceTotal').textContent = balance.toLocaleString();
+            document.getElementById('balanceEarning').textContent = totalEarnings.toLocaleString();
+            document.getElementById('adsCurrentBalance').textContent = balance.toLocaleString();
+            document.getElementById('withdrawCurrentBalance').textContent = balance.toLocaleString();
+
+            // Task page updates
+            document.getElementById('standardAdPoints').textContent = appConfig.standardAdPoints || 0;
+            document.getElementById('bonusAdPoints').textContent = appConfig.bonusAdPoints || 0;
+
+            const tasksCompleted = currentUser.dailyTasksCompleted || 0;
+            const taskLimit = appConfig.dailyTaskLimit || 50;
+            const tasksCompletedText = `${tasksCompleted}/${taskLimit}`;
+            document.getElementById('dailyTasksCompleted').textContent = tasksCompletedText;
             
-            ['ad-progress-circle', 'ad-progress-circle-tasks'].forEach(id => {
-                const circle = document.getElementById(id);
-                if(circle) {
-                    circle.style.strokeDasharray = `${circumference} ${circumference}`;
-                    circle.style.strokeDashoffset = offset;
-                }
-            });
+            const progressPercentage = taskLimit > 0 ? (tasksCompleted / taskLimit) * 100 : 0;
+            document.getElementById('taskProgressBar').style.width = `${progressPercentage}%`;
 
-            const adProgressText = document.getElementById('ad-progress-text');
-            if(adProgressText) adProgressText.textContent = `${adsWatchedToday}/${state.dailyAdLimit}`;
-            const adsWatchedHome = document.getElementById('ads-watched-count-home');
-            if(adsWatchedHome) adsWatchedHome.textContent = adsWatchedToday;
-
-            const tasksPageAds = document.getElementById('ads-watched-count-tasks');
-            if(tasksPageAds) tasksPageAds.textContent = adsWatchedToday;
-            
-            const watchAdBtn = document.getElementById('watch-ad-btn');
-            if(watchAdBtn){
-                watchAdBtn.disabled = adsWatchedToday >= state.dailyAdLimit;
-                watchAdBtn.textContent = watchAdBtn.disabled ? "আজকের সীমা শেষ" : "অ্যাড দেখুন (+15 Pts)";
-                watchAdBtn.style.opacity = watchAdBtn.disabled ? '0.5' : '1';
-                watchAdBtn.style.cursor = watchAdBtn.disabled ? 'not-allowed' : 'pointer';
+            // Disable buttons if limit is reached
+            const limitReached = tasksCompleted >= taskLimit;
+            document.getElementById('startTaskBtn').disabled = limitReached;
+            document.getElementById('watchRewardedAdBtn').disabled = limitReached;
+            if (limitReached) {
+                document.getElementById('startTaskBtn').innerHTML = `<svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg> Daily Limit Reached`;
+                document.getElementById('watchRewardedAdBtn').innerHTML = `<svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm-2 14H6V8h12v10z"></path></svg> Daily Limit Reached`;
+            } else {
+                 document.getElementById('startTaskBtn').innerHTML = `<svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg> Watch Ad & Earn (${appConfig.standardAdPoints || 0} pts)`;
+                 document.getElementById('watchRewardedAdBtn').innerHTML = `<svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm-2 14H6V8h12v10z"></path></svg> Watch Bonus Ad (${appConfig.bonusAdPoints || 0} pts)`;
             }
-        }
-        
-        // --- NAVIGATION ---
-        const navItems = document.querySelectorAll('.nav-item');
-        window.navigateTo = function(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById(pageId);
+
+            // Refer Page Update
+            document.getElementById('userReferralCode').textContent = currentUser.referralCode || 'N/A';
+            document.getElementById('referralPercentage').textContent = (appConfig.referralPercentage || 0) + '%';
+            document.getElementById('referredUsersCount').textContent = currentUser.referredUsersCount || 0;
+            document.getElementById('referralPointsEarned').textContent = referralEarnings.toLocaleString();
+
+            // Withdraw Page Update
+            document.getElementById('minWithdrawAmount').textContent = (appConfig.minWithdrawAmount || 0).toLocaleString();
+            populatePaymentMethods();
+            renderWithdrawalHistory(); 
+
+            // Profile Page Update
+            document.getElementById('profilePagePic').src = currentUser.photo_url || defaultProfilePic;
+            document.getElementById('profilePageName').textContent = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || 'User';
+            document.getElementById('profilePageId').textContent = currentUser.userId;
             
-            if(targetPage.innerHTML.trim() === '') {
-                targetPage.innerHTML = pageTemplates[pageId];
-                attachEventListeners(pageId);
+            document.getElementById('profileBalance').textContent = balance.toLocaleString();
+            document.getElementById('profileTotalEarnings').textContent = totalEarnings.toLocaleString();
+            document.getElementById('profileReferralEarnings').textContent = referralEarnings.toLocaleString();
+            document.getElementById('profileDailyTasks').textContent = tasksCompletedText;
+
+            renderDynamicTasks(); 
+        }
+
+        // Custom Alert Functions
+        function showCustomAlert(title, message, icon = '🎉') {
+            document.getElementById('customAlertTitle').textContent = title;
+            document.getElementById('customAlertMessage').textContent = message;
+            document.getElementById('customAlertIcon').textContent = icon;
+            
+            const overlay = document.getElementById('customAlertOverlay');
+            const alertBox = document.getElementById('customAlert');
+            
+            overlay.style.display = 'flex';
+            setTimeout(() => alertBox.classList.add('show'), 10);
+        }
+
+        function closeCustomAlert() {
+            const overlay = document.getElementById('customAlertOverlay');
+            const alertBox = document.getElementById('customAlert');
+            
+            alertBox.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        // Task Timer Modal Functions
+        let timerInterval;
+        let currentTaskLink = null;
+        let currentTaskPoints = 0;
+        let currentTaskId = null;
+
+        function showTaskTimer(duration, link, points, taskId) {
+            currentTaskLink = link;
+            currentTaskPoints = points;
+            currentTaskId = taskId;
+            
+            const timerOverlay = document.getElementById('taskTimerOverlay');
+            const timerCountdown = document.getElementById('taskTimerCountdown');
+            const claimBtn = document.getElementById('claimTaskPointsBtn');
+
+            timerCountdown.textContent = duration;
+            claimBtn.style.display = 'none'; 
+            claimBtn.disabled = true;
+
+            timerOverlay.style.display = 'flex';
+            setTimeout(() => document.getElementById('taskTimerOverlay').querySelector('.custom-alert').classList.add('show'), 10);
+
+            if (currentTaskLink) {
+                tg.openLink(currentTaskLink);
             }
-            targetPage.classList.add('active');
 
-            navItems.forEach(item => {
-                const indicator = item.querySelector('.active-indicator');
-                const isActive = item.dataset.page === pageId;
-                item.classList.toggle('active', isActive);
-                if (indicator) indicator.style.display = isActive ? 'block' : 'none';
-            });
-            updateDynamicContent(pageId);
-        }
-        navItems.forEach(item => item.addEventListener('click', () => navigateTo(item.dataset.page)));
-
-        function updateDynamicContent(pageId){
-            if(pageId === 'home') updateUI();
-            if(pageId === 'tasks') updateAdProgress();
-            if(pageId === 'refer') updateReferPage();
-            if(pageId === 'withdraw') renderWithdrawalHistory();
-            if(pageId === 'profile') updateProfilePage();
-        }
-
-        // --- EVENT LISTENERS & LOGIC ---
-        function attachEventListeners(pageId) {
-            if (pageId === 'tasks') document.getElementById('watch-ad-btn').addEventListener('click', showAdModal);
-            if (pageId === 'refer') document.getElementById('copy-referral-btn').addEventListener('click', copyReferralLink);
-            if (pageId === 'withdraw') {
-                document.getElementById('withdraw-form').addEventListener('submit', handleWithdrawalRequest);
-                 document.querySelectorAll('.payment-method-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => selectPaymentMethod(e.currentTarget));
-                });
-            }
-        }
-        
-        // Ad Logic
-        function showAdModal() {
-            const today = new Date().toISOString().split('T')[0];
-            let adsWatchedToday = state.userData.lastAdWatchDate === today ? state.userData.adsWatched : 0;
-            if (adsWatchedToday >= state.dailyAdLimit) return;
-            
-            const adModal = document.getElementById('ad-modal');
-            adModal.innerHTML = `<div class="card rounded-2xl p-6 text-center w-64"><h3 class="font-bold text-lg">অ্যাড দেখা হচ্ছে...</h3><div class="relative w-24 h-24 mx-auto my-4"><svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-timer-circle" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round" stroke-dasharray="100, 100" stroke-dashoffset="100"/></svg><div id="ad-timer-text" class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-2xl font-bold">5</div></div><p class="text-sm text-[var(--text-secondary)]">পুরস্কারের জন্য অপেক্ষা করুন।</p></div>`;
-            adModal.classList.remove('hidden');
-
-            let timeLeft = 5; // Demo time
-            const timerText = document.getElementById('ad-timer-text');
-            const timerCircle = document.getElementById('ad-timer-circle');
-            const radius = 15.9155;
-            const circumference = 2 * Math.PI * radius;
-            timerCircle.style.strokeDashoffset = 0;
-            
-            const interval = setInterval(() => {
+            let timeLeft = duration;
+            timerInterval = setInterval(() => {
                 timeLeft--;
-                timerText.textContent = timeLeft;
-                timerCircle.style.strokeDashoffset = circumference - ((timeLeft/5) * circumference);
-                if(timeLeft <= 0) {
-                    clearInterval(interval);
-                    adModal.classList.add('hidden');
-                    rewardUserForAd();
+                timerCountdown.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerCountdown.textContent = '0';
+                    document.getElementById('taskTimerTitle').textContent = 'Task Completed!';
+                    document.getElementById('taskTimerMessage').textContent = 'You can now claim your points.';
+                    claimBtn.style.display = 'block';
+                    claimBtn.disabled = false;
                 }
             }, 1000);
         }
 
-        async function rewardUserForAd() {
-            const userDocRef = doc(db, "users", state.userId);
-            const today = new Date().toISOString().split('T')[0];
-            const newAdsWatched = state.userData.lastAdWatchDate === today ? increment(1) : 1;
-            
-            await updateDoc(userDocRef, {
-                balance: increment(15),
-                totalEarned: increment(15),
-                adsWatched: newAdsWatched,
-                lastAdWatchDate: today
-            });
-            showToast("আপনি +15 পয়েন্ট পেয়েছেন!");
+        function closeTaskTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('taskTimerOverlay').querySelector('.custom-alert').classList.remove('show');
+            setTimeout(() => document.getElementById('taskTimerOverlay').style.display = 'none', 300);
         }
-        
-        // Referral Logic
-        function updateReferPage() {
-            if (!state.userData.telegramId) {
-                console.warn("Telegram ID not loaded yet for referral link.");
+
+        document.getElementById('claimTaskPointsBtn').addEventListener('click', async () => {
+            closeTaskTimer();
+            if (currentTaskId && currentUser.userId && currentTaskPoints > 0) {
+                try {
+                     const userDocRef = db.collection('users').doc(currentUser.userId);
+                     const today = new Date().toDateString();
+                     // Use a transaction to ensure atomicity
+                     await db.runTransaction(async (transaction) => {
+                         const userDoc = await transaction.get(userDocRef);
+                         if (!userDoc.exists) {
+                             throw "User document does not exist!";
+                         }
+                         
+                         const userData = userDoc.data();
+                         // Check if task was already completed today
+                         if(userData.completedTasks && userData.completedTasks[currentTaskId] === today) {
+                             showCustomAlert('Already Claimed', 'You have already completed this task today.', '😅');
+                             return;
+                         }
+
+                         transaction.update(userDocRef, {
+                            balance: firebase.firestore.FieldValue.increment(currentTaskPoints),
+                            totalEarnings: firebase.firestore.FieldValue.increment(currentTaskPoints),
+                            [`completedTasks.${currentTaskId}`]: today
+                         });
+
+                         // Handle referral bonus
+                        if (userData.referredBy && appConfig.referralPercentage > 0) {
+                            const referralBonus = Math.round(currentTaskPoints * (appConfig.referralPercentage / 100));
+                            if(referralBonus > 0) {
+                                const referrerDocRef = db.collection('users').doc(userData.referredBy);
+                                transaction.update(referrerDocRef, {
+                                    balance: firebase.firestore.FieldValue.increment(referralBonus),
+                                    referralEarnings: firebase.firestore.FieldValue.increment(referralBonus)
+                                });
+                                console.log(`Referral bonus of ${referralBonus} points queued for ${userData.referredBy}`);
+                            }
+                        }
+                     });
+                     
+                    showCustomAlert('Task Claimed!', `You earned ${currentTaskPoints} points!`, '💰');
+                    tg.HapticFeedback.notificationOccurred('success');
+
+                } catch (error) {
+                    console.error("Error claiming dynamic task points:", error);
+                    showCustomAlert('Error', 'Failed to claim points. Please try again.', '❌');
+                }
+            }
+        });
+
+
+        // Reward Functions (for ads)
+        async function rewardUser(points, isAdTask = true) {
+            if (!currentUser || !appConfig) {
+                showCustomAlert('Error', 'App data not loaded. Please try again.', '❌');
                 return;
             }
-            document.getElementById('referral-count').textContent = state.userData.referralCount || 0;
-            document.getElementById('referral-bonus-earned').textContent = `${Math.floor(state.userData.referralBonus || 0)} Pts`;
-            
-            // !!! গুরুত্ত্বপূর্ণ: এখানে 'app' এর পরিবর্তে আপনার অ্যাপের আসল শর্ট নেমটি বসান !!!
-            // এই নামটি আপনি টেলিগ্রামের BotFather থেকে পাবেন।
-            // আমি আপনার আগের কোড থেকে 'app' নামটি নিচ্ছি।
-            const appShortName = 'app'; 
-            
-            // রেফারেল লিঙ্কটি এখন state.userData.telegramId দিয়ে তৈরি হবে, state.userId (authUid) দিয়ে নয়।
-            document.getElementById('referral-link').value = `https://t.me/Airdrop_zon_Bot/${appShortName}?startapp=${state.userData.telegramId}`;
-        }
-        
-        function copyReferralLink() {
-            const linkInput = document.getElementById('referral-link');
-            if (linkInput.value && !linkInput.value.includes('undefined')) {
-                navigator.clipboard.writeText(linkInput.value).then(() => {
-                    showToast("রেফারেল লিঙ্ক কপি করা হয়েছে!");
-                    tg.HapticFeedback.notificationOccurred('success');
-                });
-            } else {
-                showToast("লিঙ্ক এখনো তৈরি হয়নি।", true);
+
+            checkDailyReset(currentUser);
+
+            if (currentUser.dailyTasksCompleted >= appConfig.dailyTaskLimit && isAdTask) {
+                showCustomAlert('Limit Reached', 'You have completed all daily tasks. Come back tomorrow!', '⏰');
+                return;
             }
-        }
-        
-        // Withdraw Logic
-        function selectPaymentMethod(btn) {
-            document.querySelectorAll('.payment-method-btn').forEach(b => b.classList.replace('border-[var(--primary)]', 'border-transparent'));
-            btn.classList.replace('border-transparent', 'border-[var(--primary)]');
-            const method = btn.dataset.method;
-            document.getElementById('payment-method').value = method;
-            document.getElementById('account-label').textContent = `${method} বিবরণ`;
-            document.getElementById('account-details').placeholder = method === 'Binance' ? 'Binance Pay ID দিন' : 'অ্যাকাউন্ট নম্বর দিন';
-        }
-
-        async function handleWithdrawalRequest(e) {
-            e.preventDefault();
-            const form = e.target;
-            const amount = parseInt(form.amount.value);
-            const account = form.account.value;
-            const method = form.method.value;
-
-            if(!method) { showToast("একটি পেমেন্ট মাধ্যম বাছাই করুন।", true); return; }
-            if(!amount || amount <= 0 || !account) { showToast("অনুগ্রহ করে সমস্ত ঘর সঠিকভাবে পূরণ করুন।", true); return; }
-            if(amount > state.userData.balance) { showToast("অপর্যাপ্ত ব্যালেন্স।", true); return; }
 
             try {
-                const withdrawalData = {
-                    userId: state.userId, // এটি authUid
-                    telegramId: state.userData.telegramId, // এটি টেলিগ্রাম আইডি
-                    amount, method, account,
-                    status: 'Pending',
-                    createdAt: new Date().toISOString()
-                };
-                // এখানে রুলস অনুযায়ী ব্যবহারকারী নিজের সাব-কালেকশনে লিখতে পারবে
-                await addDoc(collection(db, `users/${state.userId}/withdrawals`), withdrawalData);
-                await updateDoc(doc(db, "users", state.userId), { balance: increment(-amount) });
-                showToast("আপনার উইথড্র অনুরোধ পাঠানো হয়েছে!");
-                form.reset();
-                renderWithdrawalHistory();
+                const userDocRef = db.collection('users').doc(currentUser.userId);
+                
+                await db.runTransaction(async (transaction) => {
+                    const userDoc = await transaction.get(userDocRef);
+                    if (!userDoc.exists) throw "User not found";
+                    
+                    const userData = userDoc.data();
+                    
+                    const updates = {
+                        balance: firebase.firestore.FieldValue.increment(points),
+                        totalEarnings: firebase.firestore.FieldValue.increment(points)
+                    };
+                    if (isAdTask) {
+                        updates.dailyTasksCompleted = firebase.firestore.FieldValue.increment(1);
+                    }
+                    transaction.update(userDocRef, updates);
+
+                    if (userData.referredBy && appConfig.referralPercentage > 0) {
+                        const referralBonus = Math.round(points * (appConfig.referralPercentage / 100));
+                        if(referralBonus > 0) {
+                            const referrerDocRef = db.collection('users').doc(userData.referredBy);
+                             transaction.update(referrerDocRef, {
+                                balance: firebase.firestore.FieldValue.increment(referralBonus),
+                                referralEarnings: firebase.firestore.FieldValue.increment(referralBonus)
+                            });
+                        }
+                    }
+                });
+
+                const remaining = appConfig.dailyTaskLimit - (currentUser.dailyTasksCompleted + 1);
+                showCustomAlert('Task Completed!', `You earned ${points} points! ${remaining} daily tasks remaining.`, '💰');
+                tg.HapticFeedback.notificationOccurred('success');
+
             } catch (error) {
-                showToast("অনুরোধ ব্যর্থ হয়েছে। আবার চেষ্টা করুন।", true);
-                console.error(error);
+                console.error("Error rewarding user:", error);
+                showCustomAlert('Error', 'Failed to update points. Please try again.', '❌');
             }
         }
-        
-        function renderWithdrawalHistory() {
-            const historyList = document.getElementById('history-list');
-            if(!historyList) return;
-            const q = query(collection(db, `users/${state.userId}/withdrawals`), orderBy("createdAt", "desc"), limit(10));
-            onSnapshot(q, (querySnapshot) => {
-                if (querySnapshot.empty) {
-                    historyList.innerHTML = `<p class="text-center text-[var(--text-secondary)] text-sm">কোনো লেনদেনের ইতিহাস পাওয়া যায়নি।</p>`;
+
+        // Navigation Logic
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+
+        function navigateToPage(pageId) {
+             pages.forEach(p => p.classList.remove('active'));
+             document.getElementById(pageId).classList.add('active');
+
+             navItems.forEach(item => {
+                item.classList.toggle('active', item.dataset.page === pageId);
+             });
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navigateToPage(item.dataset.page);
+            });
+        });
+
+        // Event Listeners for Ad Tasks
+        document.getElementById('startTaskBtn').addEventListener('click', function() {
+            if (currentUser.dailyTasksCompleted >= appConfig.dailyTaskLimit) {
+                showCustomAlert('Limit Reached', 'You have completed all daily tasks. Come back tomorrow!', '⏰');
+                return;
+            }
+
+            if (typeof show_10058398 === 'function') {
+                show_10058398().then(() => {
+                    rewardUser(appConfig.standardAdPoints, true);
+                }).catch(e => {
+                    console.error("Standard ad failed:", e);
+                    showCustomAlert('Ad Error', 'The ad failed to load. Please try again.', '❌');
+                });
+            } else {
+                console.warn("Ad SDK not found. Simulating ad watch.");
+                setTimeout(() => rewardUser(appConfig.standardAdPoints, true), 1000);
+            }
+        });
+
+        document.getElementById('watchRewardedAdBtn').addEventListener('click', function() {
+            if (currentUser.dailyTasksCompleted >= appConfig.dailyTaskLimit) {
+                showCustomAlert('Limit Reached', 'You have completed all daily tasks. Come back tomorrow!', '⏰');
+                return;
+            }
+
+            if (typeof show_10058398 === 'function') {
+                show_10058398('pop').then(() => {
+                    rewardUser(appConfig.bonusAdPoints, true);
+                }).catch(e => {
+                    console.error("Rewarded ad failed:", e);
+                    showCustomAlert('Ad Not Available', 'The bonus ad is not available. Try again later.', '⏳');
+                });
+            } else {
+                console.warn("Ad SDK not found. Simulating rewarded ad watch.");
+                setTimeout(() => rewardUser(appConfig.bonusAdPoints, true), 1000);
+            }
+        });
+
+        // Refer Page event listeners
+        document.getElementById('copyReferralCodeBtn').addEventListener('click', async () => {
+            const referralCode = document.getElementById('userReferralCode').textContent;
+            try {
+                await navigator.clipboard.writeText(referralCode);
+                showCustomAlert('Copied!', 'Referral code copied to clipboard.', '📋');
+                tg.HapticFeedback.notificationOccurred('success');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showCustomAlert('Error', 'Failed to copy code.', '❌');
+            }
+        });
+
+        document.getElementById('shareOnTelegramBtn').addEventListener('click', () => {
+            const referralCode = currentUser.referralCode;
+            const botUsername = "daily_income7x_bot"; // IMPORTANT: Replace with your bot's username
+            const shareUrl = `https://t.me/${botUsername}?start=ref_${referralCode}`;
+            const message = `Join this awesome app and earn points! Use my referral link to get started: ${shareUrl}`;
+            
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(message)}`);
+        });
+
+        // Withdrawal Page Functions
+        function populatePaymentMethods() {
+            const selectElement = document.getElementById('paymentMethod');
+            selectElement.innerHTML = '';
+            if (appConfig && appConfig.paymentMethods && appConfig.paymentMethods.length > 0) {
+                appConfig.paymentMethods.forEach(method => {
+                    selectElement.innerHTML += `<option value="${method.id}">${method.name}</option>`;
+                });
+            } else {
+                selectElement.innerHTML = '<option value="" disabled>No methods available</option>';
+            }
+        }
+
+        async function renderWithdrawalHistory() {
+            const historyList = document.getElementById('withdrawHistoryList');
+            historyList.innerHTML = ''; 
+
+            if (!currentUser || !currentUser.userId) return;
+
+            try {
+                const snapshot = await db.collection('withdrawals')
+                                         .where('userId', '==', currentUser.userId)
+                                         .orderBy('createdAt', 'desc')
+                                         .limit(10)
+                                         .get();
+                
+                if (snapshot.empty) {
+                    historyList.innerHTML = '<li class="card-desc" style="text-align:center;">No withdrawal history found.</li>';
                     return;
                 }
-                let html = '';
-                querySnapshot.forEach((doc) => {
-                    const item = doc.data();
-                    let statusColor;
-                    switch (item.status) {
-                        case 'Approved': statusColor = 'var(--status-approved)'; break;
-                        case 'Rejected': statusColor = 'var(--status-rejected)'; break;
-                        default: statusColor = 'var(--status-pending)'; break;
-                    }
-                    const date = new Date(item.createdAt).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric'});
-                    html += `
-                        <div class="flex justify-between items-center p-3 bg-[var(--background)] rounded-lg">
-                            <div><p class="font-semibold">${item.method} উইথড্র</p><p class="text-xs text-[var(--text-secondary)]">${date}</p></div>
-                            <div class="text-right"><p class="font-bold text-lg">${item.amount} Pts</p><p class="text-xs font-semibold" style="color: ${statusColor};">${item.status}</p></div>
-                        </div>`;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const statusClass = `status-${data.status.toLowerCase()}`;
+                    const date = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleString() : 'N/A';
+
+                    historyList.innerHTML += `
+                        <li class="withdraw-history-item">
+                            <div class="withdraw-history-item-details">
+                                <h4>${data.amount.toLocaleString()} points (${data.paymentMethodName})</h4>
+                                <p>${data.paymentAddress}</p>
+                                <p>${date}</p>
+                            </div>
+                            <span class="withdraw-status ${statusClass}">${data.status}</span>
+                        </li>
+                    `;
                 });
-                historyList.innerHTML = html;
+
+            } catch (error) {
+                console.error("Error fetching withdrawal history:", error);
+                historyList.innerHTML = '<li class="card-desc" style="text-align:center; color:red;">Failed to load history.</li>';
+            }
+        }
+
+        document.getElementById('submitWithdrawBtn').addEventListener('click', async () => {
+            if (!currentUser || !appConfig) return showCustomAlert('Error', 'App data not loaded.', '❌');
+
+            const paymentMethodId = document.getElementById('paymentMethod').value;
+            const withdrawAmount = parseInt(document.getElementById('withdrawAmount').value);
+            const paymentAddress = document.getElementById('paymentAddress').value.trim();
+
+            if (!paymentMethodId || !withdrawAmount || !paymentAddress) return showCustomAlert('Error', 'Please fill all details.', '⚠️');
+            if (isNaN(withdrawAmount) || withdrawAmount <= 0) return showCustomAlert('Error', 'Invalid amount.', '⚠️');
+            if (withdrawAmount > currentUser.balance) return showCustomAlert('Error', 'Insufficient balance.', '❌');
+            if (withdrawAmount < appConfig.minWithdrawAmount) return showCustomAlert('Error', `Minimum withdrawal is ${appConfig.minWithdrawAmount} points.`, '⚠️');
+
+            const selectedMethod = appConfig.paymentMethods.find(m => m.id === paymentMethodId);
+
+            try {
+                // Use a transaction to ensure atomicity
+                await db.runTransaction(async (transaction) => {
+                    const userDocRef = db.collection('users').doc(currentUser.userId);
+                    const userDoc = await transaction.get(userDocRef);
+                    if (!userDoc.exists || userDoc.data().balance < withdrawAmount) {
+                        throw "Insufficient balance!";
+                    }
+
+                    // 1. Deduct points
+                    transaction.update(userDocRef, {
+                        balance: firebase.firestore.FieldValue.increment(-withdrawAmount)
+                    });
+                    
+                    // 2. Create withdrawal request
+                    const withdrawalRef = db.collection('withdrawals').doc(); // Auto-generate ID
+                    transaction.set(withdrawalRef, {
+                        userId: currentUser.userId,
+                        username: currentUser.username || 'N/A',
+                        amount: withdrawAmount,
+                        paymentMethodId: paymentMethodId,
+                        paymentMethodName: selectedMethod.name,
+                        paymentAddress: paymentAddress,
+                        status: 'Pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                
+                showCustomAlert('Submitted!', 'Your withdrawal request has been submitted.', '✅');
+                tg.HapticFeedback.notificationOccurred('success');
+                document.getElementById('withdrawAmount').value = '';
+                document.getElementById('paymentAddress').value = '';
+
+            } catch (error) {
+                console.error("Error submitting withdrawal:", error);
+                showCustomAlert('Error', error.toString(), '❌');
+            }
+        });
+
+
+        // Dynamic Tasks Rendering
+        function renderDynamicTasks() {
+            const list = document.getElementById('dynamicTasksList');
+            list.innerHTML = '';
+
+            if (!appConfig || !appConfig.dynamicTasks || appConfig.dynamicTasks.length === 0) {
+                list.innerHTML = '<p class="card-desc" style="text-align:center;">No additional tasks available.</p>';
+                return;
+            }
+
+            const today = new Date().toDateString();
+            appConfig.dynamicTasks.forEach(task => {
+                const isCompletedToday = currentUser.completedTasks && currentUser.completedTasks[task.id] === today;
+                
+                list.innerHTML += `
+                    <div class="task-item">
+                        <div class="task-item-info">
+                            <h4>${task.name}</h4>
+                            <p>${task.description} - Earn ${task.points} pts</p>
+                        </div>
+                        <button class="dynamic-task-btn" data-task-id="${task.id}" ${isCompletedToday ? 'disabled' : ''}>
+                            ${isCompletedToday ? 'Completed' : 'Start'}
+                        </button>
+                    </div>`;
+            });
+
+            document.querySelectorAll('.dynamic-task-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const taskId = event.target.dataset.taskId;
+                    const task = appConfig.dynamicTasks.find(t => t.id === taskId);
+                    if (task) {
+                        showTaskTimer(task.timer, task.link, task.points, task.id);
+                    }
+                });
             });
         }
-        
-        // Profile Page Logic
-        function updateProfilePage() {
-            const { firstName, username, photoUrl, totalEarned=0, referralBonus=0 } = state.userData;
-            document.getElementById('profile-name').textContent = firstName;
-            document.getElementById('profile-username').textContent = username ? `@${username}`: '';
-            const avatarUrl = photoUrl || `https://placehold.co/100x100/11182D/00F5D4?text=${firstName.charAt(0)}`;
-            document.getElementById('profile-avatar').style.backgroundImage = `url('${avatarUrl}')`;
-            document.getElementById('total-earned').textContent = `${Math.floor(totalEarned)} Pts`;
-            document.getElementById('profile-referral-bonus').textContent = `${Math.floor(referralBonus)} Pts`;
+
+
+        // Main Initialization Function
+        async function initApp() {
+            await fetchAppConfig();
+
+            const tgUser = tg.initDataUnsafe.user;
+            if (!tgUser || !tgUser.id) {
+                return showCustomAlert('Error', 'Could not get Telegram user data.', '❌');
+            }
+
+            const userId = String(tgUser.id);
+            const userDocRef = db.collection('users').doc(userId);
+
+            // Real-time listener for user data
+            userDocRef.onSnapshot(async (doc) => {
+                if (doc.exists) {
+                    currentUser = doc.data();
+                    checkDailyReset(currentUser); // Check every time data updates
+                } else {
+                    // Create new user if not exists
+                    const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    
+                    const newUser = {
+                        userId: userId,
+                        first_name: tgUser.first_name || '',
+                        last_name: tgUser.last_name || '',
+                        username: tgUser.username || '',
+                        photo_url: tgUser.photo_url || defaultProfilePic,
+                        balance: 0,
+                        totalEarnings: 0,
+                        dailyTasksCompleted: 0,
+                        lastTaskDate: new Date().toDateString(),
+                        referralCode: referralCode,
+                        referredBy: null,
+                        referralEarnings: 0,
+                        referredUsersCount: 0,
+                        completedTasks: {},
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    // Check for referral from start parameter
+                    const startParam = tg.initDataUnsafe.start_param;
+                    if (startParam && startParam.startsWith('ref_')) {
+                        const referrerCode = startParam.substring(4);
+                        const querySnapshot = await db.collection('users').where('referralCode', '==', referrerCode).limit(1).get();
+                        if (!querySnapshot.empty) {
+                            const referrerDoc = querySnapshot.docs[0];
+                            newUser.referredBy = referrerDoc.id;
+                            await db.collection('users').doc(referrerDoc.id).update({
+                                referredUsersCount: firebase.firestore.FieldValue.increment(1)
+                            });
+                        }
+                    }
+
+                    await userDocRef.set(newUser);
+                    currentUser = newUser;
+                    showCustomAlert('Welcome!', 'Your account has been created.', '👋');
+                }
+                updateUI();
+            }, (error) => {
+                console.error("Error listening to user document:", error);
+                showCustomAlert('Error', 'Failed to load user data.', '❌');
+            });
+            
+            // Real-time listener for app config
+             db.collection('config').doc('appConfig').onSnapshot((doc) => {
+                if(doc.exists) {
+                    appConfig = doc.data();
+                    console.log("App config updated in real-time.");
+                    updateUI();
+                }
+            }, (error) => {
+                 console.error("Error listening to app config:", error);
+            });
         }
 
-        // --- UTILITY FUNCTIONS ---
-        function showLoadingError(message) {
-            document.getElementById('loading-text').innerText = message;
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('loading-state').classList.remove('hidden');
-        }
-
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.style.backgroundColor = isError ? 'var(--status-rejected)' : 'var(--status-approved)';
-            toast.classList.remove('opacity-0', '-translate-y-10');
-            toast.classList.add('opacity-100', 'translate-y-0');
-            setTimeout(() => {
-                toast.classList.remove('opacity-100', 'translate-y-0');
-                toast.classList.add('opacity-0', '-translate-y-10');
-            }, 3000);
-        }
-        
-        // --- TEMPLATE DEFINITIONS ---
-        pageTemplates.tasks = `
-            <div class="space-y-6">
-                <h2 class="text-2xl font-bold text-center">টাস্ক ও পুরস্কার</h2>
-                <div class="card p-6 rounded-2xl text-center">
-                    <h3 class="font-bold text-xl mb-4">অ্যাড দেখুন ও আয় করুন</h3>
-                    <div class="relative w-32 h-32 mx-auto mb-4">
-                        <svg class="w-full h-full" viewBox="0 0 36 36"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--card-bg)" stroke-width="3.8"/><path id="ad-progress-circle-tasks" class="progress-ring__circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary)" stroke-width="3.8" stroke-linecap="round"/></svg>
-                        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center"><span id="ads-watched-count-tasks" class="text-3xl font-bold">0</span><span class="text-sm text-[var(--text-secondary)]">/ 30 Ads</span></div>
-                    </div>
-                    <button id="watch-ad-btn" class="primary-btn w-full py-3 rounded-lg">অ্যাড দেখুন (+15 Pts)</button>
-                </div>
-            </div>`;
-
-        pageTemplates.refer = `
-            <div class="space-y-6">
-                <h2 class="text-2xl font-bold text-center">রেফার করুন ও আয় করুন</h2>
-                <div class="grid grid-cols-2 gap-4">
-                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">মোট রেফারেল</p><p id="referral-count" class="text-3xl font-bold mt-1">0</p></div>
-                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">রেফারেল বোনাস</p><p id="referral-bonus-earned" class="text-3xl font-bold mt-1">0 Pts</p></div>
-                 </div>
-                <div class="card p-6 rounded-2xl text-center">
-                     <p class="text-sm text-[var(--primary)]">প্রতিটি সফল রেফারেলে +100 পয়েন্ট বোনাস!</p>
-                </div>
-                <div class="card p-4 rounded-2xl">
-                    <label class="text-sm text-[var(--text-secondary)]">আপনার রেফারেল লিঙ্ক</label>
-                    <div class="relative mt-2">
-                        <input id="referral-link" type="text" readonly class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 pr-12 text-sm" placeholder="লিঙ্ক লোড হচ্ছে...">
-                        <button id="copy-referral-btn" class="absolute inset-y-0 right-0 flex items-center px-3 text-[var(--primary)]">কপি</button>
-                    </div>
-                </div>
-            </div>`;
-        
-        pageTemplates.withdraw = `
-            <div class="space-y-6">
-                <h2 class="text-2xl font-bold text-center">পয়েন্ট উইথড্র</h2>
-                <div class="card p-4 rounded-2xl">
-                    <form id="withdraw-form" class="space-y-4">
-                        <div>
-                            <label class="text-sm text-[var(--text-secondary)]">পেমেন্ট মাধ্যম</label>
-                            <div class="grid grid-cols-3 gap-3 mt-2">
-                                <button type="button" class="payment-method-btn border-2 border-[var(--primary)] rounded-lg p-3 bg-[var(--background)]" data-method="Bkash"><img src="https://i.ibb.co/k5y4BSc/bkash.png" alt="Bkash" class="h-8 mx-auto"></button>
-                                <button type="button" class="payment-method-btn border-2 border-transparent rounded-lg p-3 bg-[var(--background)]" data-method="Nagad"><img src="https://i.ibb.co/JkY4P7n/nagad.png" alt="Nagad" class="h-8 mx-auto"></button>
-                                <button type="button" class="payment-method-btn border-2 border-transparent rounded-lg p-3 bg-[var(--background)]" data-method="Binance"><img src="https://i.ibb.co/3YYLgzq/binance.png" alt="Binance" class="h-8 mx-auto"></button>
-                            </div>
-                            <input type="hidden" id="payment-method" name="method" value="Bkash">
-                        </div>
-                        <div>
-                            <label class="text-sm text-[var(--text-secondary)]">পরিমাণ (Pts)</label>
-                            <input type="number" name="amount" placeholder="যেমন: 1000" class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 mt-1 focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
-                        </div>
-                        <div>
-                            <label id="account-label" class="text-sm text-[var(--text-secondary)]">Bkash বিবরণ</label>
-                            <input type="text" id="account-details" name="account" placeholder="অ্যাকাউন্ট নম্বর দিন" class="w-full bg-[var(--background)] border border-[var(--border-color)] rounded-lg p-3 mt-1 focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
-                        </div>
-                        <button type="submit" class="primary-btn w-full py-3 rounded-lg">উইথড্র অনুরোধ করুন</button>
-                    </form>
-                </div>
-                <div class="card p-4 rounded-2xl">
-                    <h3 class="font-semibold text-lg mb-3">উইথড্র হিস্টোরি</h3>
-                    <div id="history-list" class="space-y-3"></div>
-                </div>
-            </div>`;
-        
-        pageTemplates.profile = `
-            <div class="space-y-6">
-                 <div class="flex flex-col items-center text-center">
-                    <div id="profile-avatar" class="w-24 h-24 rounded-full bg-cover bg-center border-4 border-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)]"></div>
-                    <h2 id="profile-name" class="font-bold text-2xl mt-4">User</h2>
-                    <p id="profile-username" class="text-[var(--text-secondary)] text-sm">@username</p>
-                 </div>
-                 <div class="grid grid-cols-2 gap-4">
-                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">মোট আয়</p><p id="total-earned" class="text-2xl font-bold mt-1">0 Pts</p></div>
-                     <div class="card p-4 rounded-xl text-center"><p class="text-sm text-[var(--text-secondary)]">রেফারেল বোনাস</p><p id="profile-referral-bonus" class="text-2xl font-bold mt-1">0 Pts</p></div>
-                 </div>
-            </div>`;
-        
-        // --- START APP ---
-        init();
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
