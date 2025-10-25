@@ -830,6 +830,7 @@
                     <h2>Withdraw Your Earnings</h2>
                     <p class="card-desc" style="margin-top:15px;">Your current balance: <span id="withdrawCurrentBalance">0</span> points</p>
                     <p class="card-desc">Minimum withdrawal amount: <span id="minWithdrawAmount">0</span> points</p>
+                    <p class="card-desc">Minimum referrals required: <span id="minReferralsRequired">0</span></p>
                 </div>
                 <div class="withdraw-form">
                     <label for="paymentMethod">Select Payment Method</label>
@@ -999,6 +1000,7 @@
                         dollarExchangeRate: 1000, // 1000 points = $1
                         referralPercentage: 10, // 10% of referred user's earnings
                         minWithdrawAmount: 5000,
+                        minReferralsToWithdraw: 0, // Default to 0
                         paymentMethods: [
                             { id: 'payeer', name: 'Payeer' },
                             { id: 'usdt', name: 'USDT (TRC20)' },
@@ -1009,7 +1011,7 @@
             } catch (error) {
                 console.error("Error fetching app config:", error);
                  // Fallback to default config on error
-                appConfig = { standardAdPoints: 10, bonusAdPoints: 20, dailyTaskLimit: 50, dollarExchangeRate: 1000, referralPercentage: 10, minWithdrawAmount: 5000, paymentMethods: [], dynamicTasks: [] };
+                appConfig = { standardAdPoints: 10, bonusAdPoints: 20, dailyTaskLimit: 50, dollarExchangeRate: 1000, referralPercentage: 10, minWithdrawAmount: 5000, minReferralsToWithdraw: 0, paymentMethods: [], dynamicTasks: [] };
             }
         }
 
@@ -1063,19 +1065,16 @@
                  document.getElementById('watchRewardedAdBtn').innerHTML = `<svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm-2 14H6V8h12v10z"></path></svg> Watch Bonus Ad (${appConfig.bonusAdPoints || 0} pts)`;
             }
 
-            // *** FIX 1: Refer Page Update ***
-            // জেনারেট করা কোডের বদলে userId দিয়ে পুরো লিংক তৈরি করুন
+            // Refer Page Update
             const referralLink = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=ref_${currentUser.userId}`;
-            
-            // referral-code-box এ কোডের বদলে পুরো লিংকটি দেখান
             document.getElementById('userReferralCode').textContent = referralLink; 
-            
             document.getElementById('referralPercentage').textContent = (appConfig.referralPercentage || 0) + '%';
             document.getElementById('referredUsersCount').textContent = currentUser.referredUsersCount || 0;
             document.getElementById('referralPointsEarned').textContent = referralEarnings.toLocaleString();
 
             // Withdraw Page Update
             document.getElementById('minWithdrawAmount').textContent = (appConfig.minWithdrawAmount || 0).toLocaleString();
+            document.getElementById('minReferralsRequired').textContent = (appConfig.minReferralsToWithdraw || 0).toLocaleString(); // <-- নতুন লাইন
             populatePaymentMethods();
             renderWithdrawalHistory(); 
 
@@ -1323,11 +1322,8 @@
             }
         });
 
-        // *** FIX 2: Refer Page event listeners (আপডেট করা হয়েছে) ***
-        
-        // এই বাটনটি এখন কোডের বদলে পুরো লিংকটি কপি করবে
+        // Refer Page event listeners
         document.getElementById('copyReferralCodeBtn').addEventListener('click', async () => {
-            // referral-code-box থেকে পুরো লিংকটি নিন
             const referralLink = document.getElementById('userReferralCode').textContent; 
             
             try {
@@ -1340,14 +1336,9 @@
             }
         });
 
-        // এই বাটনটি userId দিয়ে সঠিক 'startapp' লিংক তৈরি করবে
         document.getElementById('shareOnTelegramBtn').addEventListener('click', () => {
-            // কোডের বদলে সরাসরি currentUser.userId ব্যবহার করুন
             const referrerUserId = currentUser.userId; 
-            
-            // বট এবং অ্যাপের নাম ব্যবহার করে সঠিক লিংক তৈরি করুন
             const shareUrl = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=ref_${referrerUserId}`;
-            
             const message = `Join this awesome app and earn points! Use my referral link to get started: ${shareUrl}`;
             
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(message)}`);
@@ -1413,6 +1404,19 @@
             const paymentMethodId = document.getElementById('paymentMethod').value;
             const withdrawAmount = parseInt(document.getElementById('withdrawAmount').value);
             const paymentAddress = document.getElementById('paymentAddress').value.trim();
+            
+            // --- নতুন রেফারেল চেক লজিক ---
+            const requiredReferrals = appConfig.minReferralsToWithdraw || 0;
+            const userReferrals = currentUser.referredUsersCount || 0;
+
+            if (userReferrals < requiredReferrals) {
+                return showCustomAlert(
+                    'Requirement Not Met', 
+                    `You need to invite at least ${requiredReferrals} friends to withdraw. You have invited ${userReferrals}.`, 
+                    '👥'
+                );
+            }
+            // --- চেক শেষ ---
 
             if (!paymentMethodId || !withdrawAmount || !paymentAddress) return showCustomAlert('Error', 'Please fill all details.', '⚠️');
             if (isNaN(withdrawAmount) || withdrawAmount <= 0) return showCustomAlert('Error', 'Invalid amount.', '⚠️');
@@ -1499,7 +1503,7 @@
         }
 
 
-        // *** FIX 3: Main Initialization Function (আপডেট করা হয়েছে) ***
+        // Main Initialization Function
         async function initApp() {
             await fetchAppConfig();
 
@@ -1518,9 +1522,6 @@
                     checkDailyReset(currentUser); // Check every time data updates
                 } else {
                     // Create new user if not exists
-                    
-                    // const referralCode = ...; // <-- referralCode জেনারেট করার দরকার নেই
-                    
                     const newUser = {
                         userId: userId,
                         first_name: tgUser.first_name || '',
@@ -1531,8 +1532,7 @@
                         totalEarnings: 0,
                         dailyTasksCompleted: 0,
                         lastTaskDate: new Date().toDateString(),
-                        // referralCode: referralCode, // <-- এই ফিল্ডের আর দরকার নেই
-                        referredBy: null, // <-- এটি নিচে আপডেট হবে
+                        referredBy: null,
                         referralEarnings: 0,
                         referredUsersCount: 0,
                         completedTasks: {},
@@ -1542,19 +1542,14 @@
                     // Check for referral from start parameter
                     const startParam = tg.initDataUnsafe.start_param;
                     if (startParam && startParam.startsWith('ref_')) {
-                        
-                        // 'ref_' এর পর থেকে রেফারারের userId নিন
                         const referrerId = startParam.substring(4);
                         
-                        // ইউজার যেন নিজেকে রেফার করতে না পারে তা চেক করুন
                         if (referrerId && referrerId !== userId) { 
                             newUser.referredBy = referrerId;
                             
-                            // রেফারারের ডকুমেন্ট সরাসরি তার Id দিয়ে ধরুন
                             const referrerDocRef = db.collection('users').doc(referrerId);
                             
                             try {
-                                // রেফারারের referredUsersCount +1 করুন
                                 await referrerDocRef.update({
                                     referredUsersCount: firebase.firestore.FieldValue.increment(1)
                                 });
